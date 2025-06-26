@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${stand.id != null ? '게시대 수정' : '새 게시대 등록'}">게시대 폼</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .map-container {
+            height: 400px;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #f1f3f4;
+            color: #333;
+        }
+        
+        .coordinates-display {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>지역별 게시대 지도</h1>
+        <nav>
+            <ul>
+                <li><a href="/" class="active">지도</a></li>
+                <li><a href="#" id="about-link">소개</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2 th:text="${stand.id != null ? '게시대 수정' : '새 게시대 등록'}">게시대 폼</h2>
+            
+            <form id="stand-form" th:action="@{${stand.id != null ? '/api/stands/' + stand.id : '/api/stands'}}" method="post">
+                <input type="hidden" id="id" name="id" th:value="${stand.id}">
+                <input type="hidden" id="latitude" name="latitude" th:value="${stand.latitude}">
+                <input type="hidden" id="longitude" name="longitude" th:value="${stand.longitude}">
+                
+                <div class="form-group">
+                    <label for="name">게시대 이름</label>
+                    <input type="text" class="form-control" id="name" name="name" th:value="${stand.name}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="region">지역</label>
+                    <input type="text" class="form-control" id="region" name="region" th:value="${stand.region}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">주소</label>
+                    <input type="text" class="form-control" id="address" name="address" th:value="${stand.address}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>위치 (지도에서 클릭하여 선택)</label>
+                    <div id="map-picker" class="map-container"></div>
+                    <div class="coordinates-display">
+                        선택된 좌표: <span id="coords-display">
+                            <span th:if="${stand.latitude != null && stand.longitude != null}" 
+                                  th:text="${stand.latitude + ', ' + stand.longitude}"></span>
+                            <span th:unless="${stand.latitude != null && stand.longitude != null}">선택되지 않음</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">설명</label>
+                    <textarea class="form-control" id="description" name="description" th:text="${stand.description}"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageUrl">이미지 URL</label>
+                    <input type="url" class="form-control" id="imageUrl" name="imageUrl" th:value="${stand.imageUrl}">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 지역별 게시대 지도. All rights reserved.</p>
+    </footer>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        let map;
+        let marker;
+        const stand = /*[[${stand}]]*/ {};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 지도 초기화
+            const defaultCenter = stand.latitude && stand.longitude 
+                ? [stand.latitude, stand.longitude] 
+                : [37.5665, 126.9780]; // 서울 중심 좌표
+            
+            map = L.map('map-picker').setView(defaultCenter, 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // 기존 마커 표시
+            if (stand.latitude && stand.longitude) {
+                marker = L.marker(defaultCenter).addTo(map);
+            }
+            
+            // 지도 클릭 이벤트
+            map.on('click', function(e) {
+                const { lat, lng } = e.latlng;
+                
+                // 기존 마커 제거
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+                
+                // 새 마커 추가
+                marker = L.marker([lat, lng]).addTo(map);
+                
+                // 폼 필드 업데이트
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lng;
+                document.getElementById('coords-display').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            });
+            
+            // 폼 제출 처리
+            document.getElementById('stand-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    id: document.getElementById('id').value || null,
+                    name: document.getElementById('name').value,
+                    region: document.getElementById('region').value,
+                    address: document.getElementById('address').value,
+                    latitude: parseFloat(document.getElementById('latitude').value),
+                    longitude: parseFloat(document.getElementById('longitude').value),
+                    description: document.getElementById('description').value,
+                    imageUrl: document.getElementById('imageUrl').value || null
+                };
+                
+                // 위치 검증
+                if (!formData.latitude || !formData.longitude) {
+                    alert('지도에서 위치를 선택해주세요.');
+                    return;
+                }
+                
+                const method = formData.id ? 'PUT' : 'POST';
+                const url = formData.id ? `/api/stands/${formData.id}` : '/api/stands';
+                
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('저장에 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('게시대가 저장되었습니다.');
+                    window.location.href = `/stands/${data.id}`;
+                })
+                .catch(error => {
+                    console.error('오류:', error);
+                    alert(error.message);
+                });
+            });
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

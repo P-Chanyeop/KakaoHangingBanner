@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지역별 게시대 지도</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+</head>
+<body>
+    <header>
+        <h1>지역별 게시대 지도</h1>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">지도</a></li>
+                <li><a href="#" id="about-link">소개</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="sidebar">
+                <div class="filter-section">
+                    <h2>필터</h2>
+                    <div class="filter-group">
+                        <label for="region-select">지역 선택:</label>
+                        <select id="region-select" th:onchange="filterByRegion()">
+                            <option value="">모든 지역</option>
+                            <option th:each="region : ${regions}" th:value="${region}" th:text="${region}"></option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="radius-input">반경 검색 (km):</label>
+                        <input type="number" id="radius-input" min="0.1" max="10" step="0.1" value="1">
+                        <button id="radius-search-btn" onclick="searchByRadius()">검색</button>
+                    </div>
+                </div>
+                
+                <div class="stand-list">
+                    <h2>게시대 목록</h2>
+                    <ul id="stands-list">
+                        <li th:each="stand : ${stands}" th:data-id="${stand.id}" class="stand-item" 
+                            th:onclick="'selectStand(' + ${stand.id} + ')'">
+                            <span th:text="${stand.name}"></span>
+                            <span class="stand-address" th:text="${stand.address}"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="map"></div>
+            
+            <div id="stand-detail" class="hidden">
+                <button class="close-btn" onclick="closeDetail()">×</button>
+                <h3 id="detail-name"></h3>
+                <p id="detail-address"></p>
+                <p id="detail-description"></p>
+                <div class="detail-actions">
+                    <button class="edit-btn" onclick="editStand()">수정</button>
+                    <button class="delete-btn" onclick="deleteStand()">삭제</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 지역별 게시대 지도. All rights reserved.</p>
+    </footer>
+
+    <script th:src="@{/js/map.js}"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Thymeleaf에서 서버 데이터를 JavaScript로 전달
+        const stands = /*[[${stands}]]*/ [];
+        const currentRegion = /*[[${selectedRegion}]]*/ '';
+        /*]]>*/
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadStands(stands);
+            
+            if (currentRegion) {
+                document.getElementById('region-select').value = currentRegion;
+            }
+        });
+    </script>
+</body>
+</html>

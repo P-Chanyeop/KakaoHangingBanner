@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${stand.name} + ' - 게시대 상세 정보'">게시대 상세 정보</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <style>
+        .detail-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .detail-map {
+            height: 400px;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .detail-info {
+            margin-bottom: 1.5rem;
+        }
+        
+        .detail-info h3 {
+            margin-bottom: 0.5rem;
+            color: #4285f4;
+        }
+        
+        .detail-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .back-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>지역별 게시대 지도</h1>
+        <nav>
+            <ul>
+                <li><a href="/" class="active">지도</a></li>
+                <li><a href="#" id="about-link">소개</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="detail-container">
+            <div class="detail-header">
+                <h2 th:text="${stand.name}">게시대 이름</h2>
+                <span th:text="${stand.region}">지역</span>
+            </div>
+            
+            <div class="detail-info">
+                <h3>주소</h3>
+                <p th:text="${stand.address}">주소 정보</p>
+            </div>
+            
+            <div class="detail-map" id="detail-map"></div>
+            
+            <div class="detail-info">
+                <h3>설명</h3>
+                <p th:text="${stand.description ?: '설명 없음'}">설명 정보</p>
+            </div>
+            
+            <div th:if="${stand.imageUrl}" class="detail-info">
+                <h3>이미지</h3>
+                <img th:src="${stand.imageUrl}" alt="게시대 이미지" style="max-width: 100%; border-radius: 4px;">
+            </div>
+            
+            <div class="detail-actions">
+                <a href="/" class="back-btn">목록으로 돌아가기</a>
+                <a th:href="@{/stands/{id}/edit(id=${stand.id})}" class="edit-btn">수정</a>
+                <button class="delete-btn" onclick="deleteStand()">삭제</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 지역별 게시대 지도. All rights reserved.</p>
+    </footer>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const stand = /*[[${stand}]]*/ {};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 상세 지도 초기화
+            const detailMap = L.map('detail-map').setView([stand.latitude, stand.longitude], 16);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(detailMap);
+            
+            // 마커 추가
+            L.marker([stand.latitude, stand.longitude])
+                .addTo(detailMap)
+                .bindPopup(`<b>${stand.name}</b><br>${stand.address}`)
+                .openPopup();
+        });
+        
+        // 게시대 삭제
+        function deleteStand() {
+            if (confirm('정말로 이 게시대를 삭제하시겠습니까?')) {
+                fetch(`/api/stands/${stand.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('게시대가 삭제되었습니다.');
+                        window.location.href = '/';
+                    } else {
+                        throw new Error('게시대 삭제에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('오류:', error);
+                    alert(error.message);
+                });
+            }
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>
