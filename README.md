@@ -1,6 +1,6 @@
 # 지역별 게시대 지도 웹사이트
 
-각 지역에 대한 지도에 게시대를 표시하는 웹사이트입니다. 사용자는 지도에서 게시대 위치를 확인하고, 지역별로 필터링하거나 특정 반경 내의 게시대를 검색할 수 있습니다.
+각 지역에 대한 지도에 게시대를 표시하는 웹사이트입니다. 사용자는 지도에서 게시대 위치를 확인하고, 지역별로 필터링하거나 현재 지도 영역 내의 게시대를 검색할 수 있습니다.
 
 ## 📋 목차
 - [기술 스택](#기술-스택)
@@ -27,6 +27,8 @@
 - **Thymeleaf**: 서버 사이드 템플릿 엔진
 - **Leaflet**: 오픈소스 지도 라이브러리
 - **JavaScript**: 클라이언트 사이드 기능 구현
+- **Bootstrap 5**: UI 프레임워크
+- **jQuery**: DOM 조작 및 이벤트 처리
 - **CSS3**: 스타일링
 
 ## 📁 프로젝트 구조
@@ -41,16 +43,15 @@ KakaoHangingBanner/
 │       │       ├── dto/          # 데이터 전송 객체
 │       │       ├── entity/       # JPA 엔티티
 │       │       ├── repository/   # 데이터 액세스 계층
-│       │       └── service/      # 비즈니스 로직
+│       │       ├── service/      # 비즈니스 로직
+│       │       └── config/       # 설정 클래스
 │       └── resources/            
 │           ├── static/           # 정적 리소스 (CSS, JS, 이미지)
 │           │   ├── css/          # CSS 파일
 │           │   ├── js/           # JavaScript 파일
-│           │   └── images/       # 이미지 파일
+│           │   └── images/       # 이미지 파일 (bannerPin.png 등)
 │           ├── templates/        # Thymeleaf 템플릿
-│           │   ├── index.html    # 메인 페이지
-│           │   ├── stand-detail.html # 게시대 상세 페이지
-│           │   └── stand-form.html   # 게시대 생성/수정 폼
+│           │   └── index.html    # 메인 페이지
 │           └── application.properties # 애플리케이션 설정
 └── build.gradle                  # Gradle 빌드 설정
 ```
@@ -59,8 +60,8 @@ KakaoHangingBanner/
 
 ### 사전 요구사항
 - Java 17 이상
-- Node.js 14 이상
 - MySQL 8.0 이상
+- Gradle 7.0 이상
 
 ### 백엔드 설정
 
@@ -86,16 +87,18 @@ spring.datasource.password=your_password
 ```bash
 ./gradlew bootRun
 ```
-서버는 기본적으로 `http://localhost:8080`에서 실행됩니다.
+서버는 기본적으로 `http://localhost:8081`에서 실행됩니다.
 
 ## ✨ 주요 기능
 
 - **지도 기반 인터페이스**: Leaflet을 사용한 인터랙티브 지도
+- **한국 지역 제한**: 지도가 한국 영역(32.0N~39.0N, 124.0E~132.0E)으로 제한됨
 - **게시대 위치 표시**: 지도에 마커로 게시대 위치 표시
-- **지역별 필터링**: 특정 지역의 게시대만 표시
-- **반경 검색**: 특정 위치 주변의 게시대 검색
-- **상세 정보 조회**: 게시대 클릭 시 상세 정보 표시
-- **게시대 관리**: 게시대 등록/수정/삭제 기능
+- **지역별 필터링**: 대구, 경북, 경남 지역 및 시군구별 필터링
+- **현재 지도 영역 내 게시대 표시**: 지도 이동 시 현재 보이는 영역 내의 게시대만 표시
+- **게시대 등록/수정**: 지도 클릭으로 위치 선택 및 게시대 정보 입력
+- **게시대 삭제**: 등록된 게시대 삭제 기능
+- **통일된 마커 아이콘**: 모든 게시대에 동일한 bannerPin.png 이미지 사용
 - **반응형 디자인**: 모바일 및 데스크톱 환경 지원
 
 ## 📡 API 엔드포인트
@@ -104,7 +107,6 @@ spring.datasource.password=your_password
 |--------|------|------|----------|
 | GET | /api/stands | 모든 게시대 조회 | - |
 | GET | /api/stands?region={region} | 특정 지역의 게시대 조회 | region: 지역명 |
-| GET | /api/stands?lat={lat}&lng={lng}&radius={radius} | 특정 반경 내의 게시대 조회 | lat: 위도, lng: 경도, radius: 반경(km) |
 | GET | /api/stands/{id} | 특정 게시대 상세 조회 | id: 게시대 ID |
 | POST | /api/stands | 새 게시대 등록 | 게시대 정보 (JSON) |
 | PUT | /api/stands/{id} | 게시대 정보 수정 | id: 게시대 ID, 게시대 정보 (JSON) |
@@ -117,10 +119,11 @@ spring.datasource.password=your_password
 ## 🔮 향후 개선 사항
 
 - **사용자 인증/인가**: Spring Security와 JWT를 사용한 인증 시스템 구현
-- **이미지 업로드**: AWS S3 또는 로컬 스토리지를 사용한 이미지 업로드 기능
+- **이미지 업로드**: 게시대 이미지 업로드 기능 추가
 - **성능 최적화**: 대량의 마커 처리를 위한 클러스터링 기능
 - **검색 기능 강화**: 주소 검색 및 키워드 기반 게시대 검색
 - **모바일 앱**: React Native를 사용한 모바일 앱 개발
+- **지오코딩 통합**: 주소 입력 시 자동으로 좌표 변환
 
 ## 🤝 기여 방법
 

@@ -1,95 +1,232 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>지역별 게시대 지도</title>
+    
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        
+        .map-container {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .post-stand-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .post-stand-item:hover {
+            background-color: #f0f0f0;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .post-stand-item.active {
+            background-color: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+        }
+        
+        /* 플로팅 폼 스타일 */
+        .floating-form {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: 90%;
+            margin: 0;
+            z-index: 1050;
+            pointer-events: auto;
+        }
+        
+        /* 모달 배경 스타일 */
+        .modal-backdrop {
+            opacity: 0.1 !important;
+        }
+        
+        /* 모달 자체의 z-index 조정 */
+        .modal {
+            background: transparent;
+            pointer-events: none;
+        }
+        
+        .modal-content {
+            pointer-events: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,.5);
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>지역별 게시대 지도</h1>
-        <nav>
-            <ul>
-                <li><a href="#" class="active">지도</a></li>
-                <li><a href="#" id="about-link">소개</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main>
-        <div class="container">
-            <div class="sidebar">
-                <div class="filter-section">
-                    <h2>필터</h2>
-                    <div class="filter-group">
-                        <label for="region-select">지역 선택:</label>
-                        <select id="region-select" th:onchange="filterByRegion()">
-                            <option value="">모든 지역</option>
-                            <option th:each="region : ${regions}" th:value="${region}" th:text="${region}"></option>
-                        </select>
+    <div class="container-fluid">
+        <header class="bg-success text-white p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>지역별 게시대 지도</h1>
+                <button id="addPostStandBtn" class="btn btn-light">새 게시대 등록</button>
+            </div>
+        </header>
+        
+        <div class="row">
+            <div class="col-md-9">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="regionSelect">지역 선택:</label>
+                                    <select id="regionSelect" class="form-select">
+                                        <option value="">전체</option>
+                                        <option value="대구">대구</option>
+                                        <option value="경북">경북</option>
+                                        <option value="경남">경남</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group" id="subRegionContainer" style="display: none;">
+                                    <label for="subRegionSelect">시군구 선택:</label>
+                                    <select id="subRegionSelect" class="form-select">
+                                        <option value="">전체</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- 반경 설정 제거 -->
+                        </div>
                     </div>
-                    
-                    <div class="filter-group">
-                        <label for="radius-input">반경 검색 (km):</label>
-                        <input type="number" id="radius-input" min="0.1" max="10" step="0.1" value="1">
-                        <button id="radius-search-btn" onclick="searchByRadius()">검색</button>
+                    <div class="card-body p-0">
+                        <div id="map"></div>
                     </div>
-                </div>
-                
-                <div class="stand-list">
-                    <h2>게시대 목록</h2>
-                    <ul id="stands-list">
-                        <li th:each="stand : ${stands}" th:data-id="${stand.id}" class="stand-item" 
-                            th:onclick="'selectStand(' + ${stand.id} + ')'">
-                            <span th:text="${stand.name}"></span>
-                            <span class="stand-address" th:text="${stand.address}"></span>
-                        </li>
-                    </ul>
+                    <div class="card-footer bg-light">
+                        <p>표시된 게시대: <span id="postStandCount">0</span>개</p>
+                    </div>
                 </div>
             </div>
             
-            <div id="map"></div>
-            
-            <div id="stand-detail" class="hidden">
-                <button class="close-btn" onclick="closeDetail()">×</button>
-                <h3 id="detail-name"></h3>
-                <p id="detail-address"></p>
-                <p id="detail-description"></p>
-                <div class="detail-actions">
-                    <button class="edit-btn" onclick="editStand()">수정</button>
-                    <button class="delete-btn" onclick="deleteStand()">삭제</button>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5>게시대 목록</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 650px; overflow-y: auto;">
+                        <div id="postStandList" class="list-group">
+                            <!-- 게시대 목록이 여기에 동적으로 추가됩니다 -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2025 지역별 게시대 지도. All rights reserved.</p>
-    </footer>
-
+    </div>
+    
+    <!-- 게시대 상세 정보 모달 -->
+    <div class="modal fade" id="postStandDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="postStandTitle">게시대 상세 정보</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>주소:</strong> <span id="postStandAddress"></span></p>
+                            <p><strong>지역:</strong> <span id="postStandRegion"></span></p>
+                            <p><strong>좌표:</strong> <span id="postStandCoords"></span></p>
+                            <div id="postStandDescription"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <img id="postStandImage" class="img-fluid" alt="게시대 이미지" style="max-height: 300px; width: 100%; object-fit: cover;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="editPostStandBtn">수정</button>
+                    <button type="button" class="btn btn-danger" id="deletePostStandBtn">삭제</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 게시대 등록/수정 모달 -->
+    <div class="modal" id="postStandFormModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog floating-form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="formTitle">새 게시대 등록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-info">지도를 클릭하여 위치를 선택하세요.</p>
+                    <form id="postStandForm">
+                        <input type="hidden" id="postStandId">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">이름 *</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">주소 *</label>
+                            <input type="text" class="form-control" id="address" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="latitude" class="form-label">위도 *</label>
+                                <input type="number" class="form-control" id="latitude" step="any" required>
+                            </div>
+                            <div class="col">
+                                <label for="longitude" class="form-label">경도 *</label>
+                                <input type="number" class="form-control" id="longitude" step="any" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="region" class="form-label">지역 *</label>
+                            <select class="form-select" id="region" required>
+                                <option value="">지역 선택</option>
+                                <option value="대구">대구</option>
+                                <option value="경북">경북</option>
+                                <option value="경남">경남</option>
+                            </select>
+                        </div>
+                        <!-- 이미지 URL 필드 제거 -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">설명</label>
+                            <textarea class="form-control" id="description" rows="4"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-success" id="savePostStandBtn">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
     <script th:src="@{/js/map.js}"></script>
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        // Thymeleaf에서 서버 데이터를 JavaScript로 전달
-        const stands = /*[[${stands}]]*/ [];
-        const currentRegion = /*[[${selectedRegion}]]*/ '';
-        /*]]>*/
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            initMap();
-            loadStands(stands);
-            
-            if (currentRegion) {
-                document.getElementById('region-select').value = currentRegion;
-            }
-        });
-    </script>
+    <script th:src="@{/js/map-modal.js}"></script>
 </body>
 </html>
