@@ -2,8 +2,9 @@ package com.mapboard.service;
 
 import com.mapboard.dto.PostStandDto;
 import com.mapboard.entity.PostStand;
-import com.mapboard.repository.PostStandRepository;
-import lombok.RequiredArgsConstructor;
+import com.mapboard.entity.Stand;
+import com.mapboard.repository.StandRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,65 +12,99 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class PostStandService {
     
-    private final PostStandRepository postStandRepository;
+    private final StandRepository standRepository;
+    
+    @Autowired
+    public PostStandService(StandRepository standRepository) {
+        this.standRepository = standRepository;
+    }
     
     @Transactional(readOnly = true)
     public List<PostStandDto> getAllPostStands() {
-        return postStandRepository.findAll().stream()
-                .map(PostStandDto::fromEntity)
+        return standRepository.findAll().stream()
+                .map(this::convertToPostStandDto)
                 .collect(Collectors.toList());
     }
     
     @Transactional(readOnly = true)
     public PostStandDto getPostStandById(Long id) {
-        PostStand postStand = postStandRepository.findById(id)
+        Stand stand = standRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시대를 찾을 수 없습니다. ID: " + id));
-        return PostStandDto.fromEntity(postStand);
+        return convertToPostStandDto(stand);
     }
     
     @Transactional(readOnly = true)
     public List<PostStandDto> getPostStandsByRegion(String region) {
-        return postStandRepository.findByRegion(region).stream()
-                .map(PostStandDto::fromEntity)
+        return standRepository.findByRegion(region).stream()
+                .map(this::convertToPostStandDto)
                 .collect(Collectors.toList());
     }
     
     @Transactional(readOnly = true)
     public List<PostStandDto> getPostStandsWithinRadius(double lat, double lng, double radiusKm) {
-        return postStandRepository.findAllWithinRadius(lat, lng, radiusKm).stream()
-                .map(PostStandDto::fromEntity)
+        return standRepository.findWithinRadius(lat, lng, radiusKm).stream()
+                .map(this::convertToPostStandDto)
                 .collect(Collectors.toList());
     }
     
     @Transactional
     public PostStandDto createPostStand(PostStandDto postStandDto) {
-        PostStand postStand = postStandDto.toEntity();
-        PostStand savedPostStand = postStandRepository.save(postStand);
-        return PostStandDto.fromEntity(savedPostStand);
+        Stand stand = convertToStand(postStandDto);
+        Stand savedStand = standRepository.save(stand);
+        return convertToPostStandDto(savedStand);
     }
     
     @Transactional
     public PostStandDto updatePostStand(Long id, PostStandDto postStandDto) {
-        PostStand existingPostStand = postStandRepository.findById(id)
+        Stand existingStand = standRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시대를 찾을 수 없습니다. ID: " + id));
         
-        existingPostStand.setName(postStandDto.getName());
-        existingPostStand.setAddress(postStandDto.getAddress());
-        existingPostStand.setLatitude(postStandDto.getLatitude());
-        existingPostStand.setLongitude(postStandDto.getLongitude());
-        existingPostStand.setImageUrl(postStandDto.getImageUrl());
-        existingPostStand.setDescription(postStandDto.getDescription());
-        existingPostStand.setRegion(postStandDto.getRegion());
+        existingStand.setName(postStandDto.getName());
+        existingStand.setAddress(postStandDto.getAddress());
+        existingStand.setLatitude(postStandDto.getLatitude());
+        existingStand.setLongitude(postStandDto.getLongitude());
+        existingStand.setImageUrl(postStandDto.getImageUrl());
+        existingStand.setDescription(postStandDto.getDescription());
+        existingStand.setRegion(postStandDto.getRegion());
         
-        PostStand updatedPostStand = postStandRepository.save(existingPostStand);
-        return PostStandDto.fromEntity(updatedPostStand);
+        Stand updatedStand = standRepository.save(existingStand);
+        return convertToPostStandDto(updatedStand);
     }
     
     @Transactional
     public void deletePostStand(Long id) {
-        postStandRepository.deleteById(id);
+        standRepository.deleteById(id);
+    }
+    
+    // Stand -> PostStandDto 변환
+    private PostStandDto convertToPostStandDto(Stand stand) {
+        return PostStandDto.builder()
+                .id(stand.getId())
+                .name(stand.getName())
+                .address(stand.getAddress())
+                .latitude(stand.getLatitude())
+                .longitude(stand.getLongitude())
+                .imageUrl(stand.getImageUrl())
+                .description(stand.getDescription())
+                .region(stand.getRegion())
+                .createdAt(stand.getCreatedAt())
+                .updatedAt(stand.getUpdatedAt())
+                .build();
+    }
+    
+    // PostStandDto -> Stand 변환
+    private Stand convertToStand(PostStandDto dto) {
+        Stand stand = new Stand();
+        stand.setId(dto.getId());
+        stand.setName(dto.getName());
+        stand.setAddress(dto.getAddress());
+        stand.setLatitude(dto.getLatitude());
+        stand.setLongitude(dto.getLongitude());
+        stand.setImageUrl(dto.getImageUrl());
+        stand.setDescription(dto.getDescription());
+        stand.setRegion(dto.getRegion());
+        return stand;
     }
 }

@@ -38,20 +38,24 @@ KakaoHangingBanner/
 ├── src/                          # 소스 코드
 │   └── main/
 │       ├── java/
-│       │   └── com/mapboard/     
-│       │       ├── controller/   # 웹 및 REST API 컨트롤러
-│       │       ├── dto/          # 데이터 전송 객체
-│       │       ├── entity/       # JPA 엔티티
-│       │       ├── repository/   # 데이터 액세스 계층
-│       │       ├── service/      # 비즈니스 로직
-│       │       └── config/       # 설정 클래스
+│       │   ├── com/mapboard/     
+│       │   │   ├── controller/   # 웹 및 REST API 컨트롤러
+│       │   │   ├── dto/          # 데이터 전송 객체
+│       │   │   ├── entity/       # JPA 엔티티
+│       │   │   ├── repository/   # 데이터 액세스 계층
+│       │   │   ├── service/      # 비즈니스 로직
+│       │   │   └── config/       # 설정 클래스
+│       │   └── com/softcat/kakaohangingbanner/ # 메인 애플리케이션 클래스
 │       └── resources/            
 │           ├── static/           # 정적 리소스 (CSS, JS, 이미지)
 │           │   ├── css/          # CSS 파일
 │           │   ├── js/           # JavaScript 파일
 │           │   └── images/       # 이미지 파일 (bannerPin.png 등)
 │           ├── templates/        # Thymeleaf 템플릿
-│           │   └── index.html    # 메인 페이지
+│           │   ├── index.html    # 메인 페이지
+│           │   ├── stand-detail.html # 게시대 상세 페이지
+│           │   ├── stand-form.html   # 게시대 생성/수정 폼
+│           │   └── api-test.html     # API 테스트 페이지
 │           └── application.properties # 애플리케이션 설정
 └── build.gradle                  # Gradle 빌드 설정
 ```
@@ -60,7 +64,7 @@ KakaoHangingBanner/
 
 ### 사전 요구사항
 - Java 17 이상
-- MySQL 8.0 이상
+- MySQL 8.0 이상 또는 H2 데이터베이스
 - Gradle 7.0 이상
 
 ### 백엔드 설정
@@ -71,19 +75,33 @@ git clone https://github.com/yourusername/KakaoHangingBanner.git
 cd KakaoHangingBanner
 ```
 
-2. MySQL 데이터베이스 생성:
-```sql
-CREATE DATABASE mapboard CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+2. 데이터베이스 설정:
+   - MySQL 사용 시:
+   ```sql
+   CREATE DATABASE mapboard CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+   
+   - `application.properties` 파일에서 MySQL 설정:
+   ```properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/mapboard?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+   spring.datasource.username=your_username
+   spring.datasource.password=your_password
+   spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+   ```
+   
+   - 또는 H2 인메모리 데이터베이스 사용 (개발 및 테스트용):
+   ```properties
+   spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+   spring.datasource.driverClassName=org.h2.Driver
+   spring.datasource.username=sa
+   spring.datasource.password=
+   spring.h2.console.enabled=true
+   spring.h2.console.path=/h2-console
+   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
+   ```
 
-3. `application.properties` 파일에서 데이터베이스 연결 정보 수정:
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/mapboard?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-```
-
-4. 애플리케이션 실행:
+3. 애플리케이션 실행:
 ```bash
 ./gradlew bootRun
 ```
@@ -96,10 +114,11 @@ spring.datasource.password=your_password
 - **게시대 위치 표시**: 지도에 마커로 게시대 위치 표시
 - **지역별 필터링**: 대구, 경북, 경남 지역 및 시군구별 필터링
 - **현재 지도 영역 내 게시대 표시**: 지도 이동 시 현재 보이는 영역 내의 게시대만 표시
-- **게시대 등록/수정**: 지도 클릭으로 위치 선택 및 게시대 정보 입력
+- **게시대 등록/수정**: 지도 아래 폼에서 위치 선택 및 게시대 정보 입력
 - **게시대 삭제**: 등록된 게시대 삭제 기능
 - **통일된 마커 아이콘**: 모든 게시대에 동일한 bannerPin.png 이미지 사용
 - **반응형 디자인**: 모바일 및 데스크톱 환경 지원
+- **API 테스트 페이지**: API 엔드포인트 테스트를 위한 전용 페이지
 
 ## 📡 API 엔드포인트
 

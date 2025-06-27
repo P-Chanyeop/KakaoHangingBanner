@@ -26,6 +26,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // h2 데이터베이스 (개발용)
+    runtimeOnly 'com.h2database:h2'
     
     // 필요시 Spring Security 추가
     // implementation 'org.springframework.boot:spring-boot-starter-security'

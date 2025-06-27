@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/stands")
-@CrossOrigin(origins = "*") // CORS 허용
+// 컨트롤러 비활성화
+//@Controller
+//@RequestMapping("/api/stands")
 public class PostStandApiController {
 
     private final PostStandService postStandService;
@@ -22,7 +22,7 @@ public class PostStandApiController {
         this.postStandService = postStandService;
     }
 
-    @GetMapping
+    //@GetMapping
     public ResponseEntity<List<PostStandDto>> getPostStands(
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng,
@@ -47,7 +47,7 @@ public class PostStandApiController {
         }
     }
 
-    @GetMapping("/{id}")
+    //@GetMapping("/{id}")
     public ResponseEntity<PostStandDto> getPostStandById(@PathVariable Long id) {
         try {
             PostStandDto postStand = postStandService.getPostStandById(id);
@@ -64,7 +64,7 @@ public class PostStandApiController {
         }
     }
 
-    @PostMapping
+    //@PostMapping
     public ResponseEntity<PostStandDto> createPostStand(@RequestBody PostStandDto postStandDto) {
         try {
             PostStandDto createdPostStand = postStandService.createPostStand(postStandDto);
@@ -76,7 +76,7 @@ public class PostStandApiController {
         }
     }
 
-    @PutMapping("/{id}")
+    //@PutMapping("/{id}")
     public ResponseEntity<PostStandDto> updatePostStand(
             @PathVariable Long id, 
             @RequestBody PostStandDto postStandDto) {
@@ -91,7 +91,7 @@ public class PostStandApiController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    //@DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePostStand(@PathVariable Long id) {
         try {
             postStandService.deletePostStand(id);

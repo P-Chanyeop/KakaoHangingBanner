@@ -1,6 +1,8 @@
 // 지역 및 시군구 데이터
 // API 기본 URL
-const API_BASE_URL = 'http://localhost:8081/api';const regionData = {
+const API_BASE_URL = 'http://localhost:8081/api';
+
+const regionData = {
     '대구': {
         center: [35.8714, 128.6014],
         subRegions: [
@@ -89,10 +91,10 @@ let markers = [];
 let currentPostStands = [];
 let selectedPostStand = null;
 let allPostStands = []; // 모든 게시대 데이터 저장
+let tempMarker = null; // 임시 마커
 
 // 모달 요소
 let postStandDetailModal;
-let postStandFormModal;
 
 // DOM이 로드된 후 실행
 document.addEventListener('DOMContentLoaded', function() {
@@ -105,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // 모달 초기화
 function initModals() {
     postStandDetailModal = new bootstrap.Modal(document.getElementById('postStandDetailModal'));
-    postStandFormModal = new bootstrap.Modal(document.getElementById('postStandFormModal'));
 }
 
 // 지도 초기화
@@ -139,35 +140,28 @@ function initMap() {
     
     // 지도 클릭 이벤트
     map.on('click', function(e) {
-        // 모달이 열려있는지 확인
-        if ($('#postStandFormModal').hasClass('show')) {
-            console.log('지도 클릭: ', e.latlng);
-            
-            // 위도/경도 필드 업데이트
-            document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
-            document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
-            
-            // 임시 마커 표시
-            if (window.tempMarker) {
-                map.removeLayer(window.tempMarker);
-            }
-            
-            window.tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
-                icon: L.icon({
-                    iconUrl: '/images/bannerPin.png',
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32]
-                })
-            }).addTo(map);
-            
-            // 이벤트 전파 중지
-            L.DomEvent.stopPropagation(e);
+        console.log('지도 클릭: ', e.latlng);
+        
+        // 위도/경도 필드 업데이트
+        document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+        document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+        
+        // 임시 마커 표시
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
         }
+        
+        tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+            icon: L.icon({
+                iconUrl: '/images/bannerPin.png',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
+            })
+        }).addTo(map);
     });
     
     console.log("지도가 초기화되었습니다.");
 }
-
 // 이벤트 리스너 초기화
 function initEventListeners() {
     // 지역 선택 변경 이벤트
@@ -198,11 +192,6 @@ function initEventListeners() {
         }
     });
     
-    // 새 게시대 등록 버튼 클릭 이벤트
-    document.getElementById('addPostStandBtn').addEventListener('click', function() {
-        openPostStandForm();
-    });
-    
     // 게시대 저장 버튼 클릭 이벤트
     document.getElementById('savePostStandBtn').addEventListener('click', function() {
         savePostStand();
@@ -211,7 +200,7 @@ function initEventListeners() {
     // 게시대 수정 버튼 클릭 이벤트
     document.getElementById('editPostStandBtn').addEventListener('click', function() {
         if (selectedPostStand) {
-            openPostStandForm(selectedPostStand);
+            fillPostStandForm(selectedPostStand);
             postStandDetailModal.hide();
         }
     });
@@ -350,7 +339,6 @@ function loadPostStandsBySubRegion(region, subRegion) {
             }
         });
 }
-
 // 현재 지도 영역 내의 게시대 업데이트
 function updateVisiblePostStands() {
     if (!map || allPostStands.length === 0) return;
@@ -382,6 +370,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const distance = R * c;
     return distance;
 }
+
 // 마커 업데이트
 function updateMarkers(postStands) {
     // 기존 마커 제거
@@ -418,7 +407,6 @@ function createMarkerPopup(postStand) {
         <div class="marker-popup">
             <h3>${postStand.name}</h3>
             <p>${postStand.address}</p>
-            <img src="/images/bannerPin.png" alt="${postStand.name}" style="width: 100%; max-height: 150px; object-fit: contain;">
             <button onclick="selectPostStandById(${postStand.id})">상세 보기</button>
         </div>
     `;
@@ -448,7 +436,7 @@ function updatePostStandList(postStands) {
                 <span class="badge bg-success">${postStand.region}</span>
             </div>
             <div class="post-stand-thumbnail">
-                <img src="/images/bannerPin.png" alt="${postStand.name}" style="width: 60px; height: 60px; object-fit: contain; border-radius: 4px;">
+                <img src="/images/bannerPin.png" alt="${postStand.name}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;">
             </div>
         `;
         
@@ -466,7 +454,6 @@ function updatePostStandList(postStands) {
 function updatePostStandCount(count) {
     document.getElementById('postStandCount').textContent = count;
 }
-
 // 게시대 선택
 function selectPostStand(postStand) {
     selectedPostStand = postStand;
@@ -509,45 +496,31 @@ function selectPostStandById(id) {
     }
 }
 
-// 게시대 폼 열기
-function openPostStandForm(postStand = null) {
-    const formTitle = document.getElementById('formTitle');
-    const postStandForm = document.getElementById('postStandForm');
-    const postStandId = document.getElementById('postStandId');
+// 게시대 폼에 데이터 채우기
+function fillPostStandForm(postStand) {
+    document.getElementById('postStandId').value = postStand.id;
+    document.getElementById('name').value = postStand.name;
+    document.getElementById('address').value = postStand.address;
+    document.getElementById('latitude').value = postStand.latitude;
+    document.getElementById('longitude').value = postStand.longitude;
+    document.getElementById('region').value = postStand.region;
+    document.getElementById('description').value = postStand.description || '';
     
-    // 폼 초기화
-    postStandForm.reset();
-    
-    if (postStand) {
-        // 수정 모드
-        formTitle.textContent = '게시대 수정';
-        postStandId.value = postStand.id;
-        document.getElementById('name').value = postStand.name;
-        document.getElementById('address').value = postStand.address;
-        document.getElementById('latitude').value = postStand.latitude;
-        document.getElementById('longitude').value = postStand.longitude;
-        document.getElementById('region').value = postStand.region;
-        document.getElementById('imageUrl').value = postStand.imageUrl || '';
-        document.getElementById('description').value = postStand.description || '';
-    } else {
-        // 등록 모드
-        formTitle.textContent = '새 게시대 등록';
-        postStandId.value = '';
-        
-        // 현재 지도 중심 좌표로 위치 설정
-        const center = map.getCenter();
-        document.getElementById('latitude').value = center.lat.toFixed(6);
-        document.getElementById('longitude').value = center.lng.toFixed(6);
-        
-        // 현재 선택된 지역 설정
-        const selectedRegion = document.getElementById('regionSelect').value;
-        if (selectedRegion) {
-            document.getElementById('region').value = selectedRegion;
-        }
+    // 지도에 위치 표시
+    if (tempMarker) {
+        map.removeLayer(tempMarker);
     }
     
-    // 모달 표시
-    postStandFormModal.show();
+    tempMarker = L.marker([postStand.latitude, postStand.longitude], {
+        icon: L.icon({
+            iconUrl: '/images/bannerPin.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        })
+    }).addTo(map);
+    
+    // 지도 중심 이동
+    map.setView([postStand.latitude, postStand.longitude], 15);
 }
 
 // 게시대 저장 (등록/수정)
@@ -583,6 +556,9 @@ function savePostStand() {
     const url = postStandId ? `${API_BASE_URL}/stands/${postStandId}` : `${API_BASE_URL}/stands`;
     const method = postStandId ? 'PUT' : 'POST';
     
+    console.log(`API 요청: ${method} ${url}`);
+    console.log('요청 데이터:', postStandData);
+    
     fetch(url, {
         method: method,
         headers: {
@@ -591,14 +567,24 @@ function savePostStand() {
         body: JSON.stringify(postStandData)
     })
     .then(response => {
+        console.log('응답 상태:', response.status);
         if (!response.ok) {
-            throw new Error('게시대 저장 중 오류가 발생했습니다.');
+            throw new Error(`게시대 저장 중 오류가 발생했습니다. 상태 코드: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
-        // 모달 닫기
-        postStandFormModal.hide();
+        console.log('응답 데이터:', data);
+        
+        // 폼 초기화
+        document.getElementById('postStandForm').reset();
+        document.getElementById('postStandId').value = '';
+        
+        // 임시 마커 제거
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
+            tempMarker = null;
+        }
         
         // 데이터 새로고침
         loadAllPostStands();
@@ -613,8 +599,15 @@ function savePostStand() {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.log('개발 환경에서 더미 저장 처리');
             
-            // 모달 닫기
-            postStandFormModal.hide();
+            // 폼 초기화
+            document.getElementById('postStandForm').reset();
+            document.getElementById('postStandId').value = '';
+            
+            // 임시 마커 제거
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
+            }
             
             if (postStandId) {
                 // 수정 모드
@@ -787,51 +780,3 @@ window.selectPostStandById = function(id) {
         selectPostStand(postStand);
     }
 };
-
-// 모달 관련 코드 추가
-document.addEventListener('DOMContentLoaded', function() {
-    // 모달 설정
-    const postStandFormModalEl = document.getElementById('postStandFormModal');
-    if (postStandFormModalEl) {
-        postStandFormModalEl.addEventListener('shown.bs.modal', function() {
-            // 모달이 열려있을 때 지도 클릭 이벤트 활성화
-            // backdrop 요소가 있는지 확인 후 스타일 적용
-            setTimeout(() => {
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) {
-                    backdrop.style.opacity = '0.1';
-                }
-            }, 100);
-            
-            // 지도 클릭 시 좌표 업데이트 알림
-            const mapClickHandler = function(e) {
-                document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
-                document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
-                
-                // 클릭 위치에 임시 마커 표시
-                if (window.tempMarker) {
-                    map.removeLayer(window.tempMarker);
-                }
-                window.tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
-                    icon: L.icon({
-                        iconUrl: '/images/bannerPin.png',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 32]
-                    })
-                }).addTo(map);
-            };
-            
-            // 이벤트 리스너 등록
-            map.on('click', mapClickHandler);
-            
-            // 모달이 닫힐 때 이벤트 리스너 제거
-            postStandFormModalEl.addEventListener('hidden.bs.modal', function() {
-                map.off('click', mapClickHandler);
-                if (window.tempMarker) {
-                    map.removeLayer(window.tempMarker);
-                    window.tempMarker = null;
-                }
-            }, { once: true });
-        });
-    }
-});
