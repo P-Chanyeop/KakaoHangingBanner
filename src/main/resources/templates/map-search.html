@@ -36,6 +36,7 @@
             z-index: 999;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .sidebar.collapsed {
@@ -164,26 +165,28 @@
 
         /* Toggle Button */
         .toggle-btn {
-            position: absolute;
+            position: fixed;
             left: 400px;
-            top: 20px;
+            top: 50%;
+            transform: translateY(-50%);
             z-index: 1000;
             background-color: var(--bg-white);
             border: none;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
+            padding: 1rem 0.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
             box-shadow: var(--shadow-md);
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 1.2rem;
+            color: var(--primary-blue);
         }
 
         .toggle-btn:hover {
-            box-shadow: var(--shadow-lg);
+            background-color: var(--bg-gray-light);
         }
 
-        .sidebar.collapsed + .toggle-btn {
-            left: 20px;
+        .sidebar.collapsed ~ .toggle-btn {
+            left: 0;
         }
 
         /* Stats */
@@ -300,7 +303,7 @@
 
         <!-- Toggle Button -->
         <button class="toggle-btn" id="toggleBtn" title="사이드바 토글">
-            ☰
+            <i class="fas fa-chevron-left"></i>
         </button>
 
         <!-- Map -->
@@ -322,7 +325,15 @@
         // 지도 초기화
         function initMap() {
             // 대구를 중심으로 지도 초기화
-            map = L.map('map').setView([35.8714, 128.6014], 10);
+            map = L.map('map', {
+                center: [35.8714, 128.6014],
+                zoom: 10,
+                maxBounds: [
+                    [33.0, 124.5],  // 남서쪽 모서리
+                    [38.9, 132.0]   // 북동쪽 모서리
+                ],
+                maxBoundsViscosity: 1.0
+            });
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -452,7 +463,16 @@
         // 사이드바 토글
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+
+            // 화살표 방향 변경
+            const icon = toggleBtn.querySelector('i');
+            if (isCollapsed) {
+                icon.className = 'fas fa-chevron-right';
+            } else {
+                icon.className = 'fas fa-chevron-left';
+            }
 
             // 지도 크기 재조정
             setTimeout(() => {
