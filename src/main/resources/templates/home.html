@@ -478,8 +478,8 @@
                         <div class="calendar-day-header">목</div>
                         <div class="calendar-day-header">금</div>
                         <div class="calendar-day-header">토</div>
-                        <div id="calendarDays"></div>
                     </div>
+                    <div class="calendar-grid" id="calendarDays"></div>
 
                     <!-- Event Form -->
                     <div class="event-form-container" id="eventFormContainer">
@@ -492,27 +492,11 @@
 
                         <form id="eventForm" onsubmit="saveEvent(event)">
                             <div class="form-group" style="margin-bottom: 1rem;">
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">제목</label>
-                                <input type="text" id="eventTitle" class="form-control" required placeholder="일정 제목을 입력하세요">
+                                <textarea id="eventContent" class="form-control" rows="2" required placeholder="메모를 입력하세요 (엔터로 줄바꿈 가능)" style="resize: none;"></textarea>
                             </div>
 
-                            <div class="form-group" style="margin-bottom: 1rem;">
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">내용</label>
-                                <textarea id="eventContent" class="form-control" rows="3" placeholder="일정 내용을 입력하세요"></textarea>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 1rem;">
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">카테고리</label>
-                                <select id="eventCategory" class="form-control" onchange="updateEventColors()">
-                                    <option value="렌트비" data-bg="#f97316" data-text="#ffffff">렌트비</option>
-                                    <option value="게시대관리" data-bg="#10b981" data-text="#ffffff">게시대관리</option>
-                                    <option value="공지사항" data-bg="#3b82f6" data-text="#ffffff">공지사항</option>
-                                    <option value="메모" data-bg="#6b7280" data-text="#ffffff">메모</option>
-                                </select>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <i class="fas fa-save"></i> 저장
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+                                <i class="fas fa-plus"></i> 추가
                             </button>
                         </form>
 
@@ -520,21 +504,6 @@
                         <div class="event-list" id="eventList"></div>
                     </div>
 
-                    <!-- Category Legend -->
-                    <div class="category-badges">
-                        <span class="category-badge" style="background-color: #f97316;">
-                            <i class="fas fa-money-bill-wave"></i> 렌트비
-                        </span>
-                        <span class="category-badge" style="background-color: #10b981;">
-                            <i class="fas fa-tasks"></i> 게시대관리
-                        </span>
-                        <span class="category-badge" style="background-color: #3b82f6;">
-                            <i class="fas fa-bullhorn"></i> 공지사항
-                        </span>
-                        <span class="category-badge" style="background-color: #6b7280;">
-                            <i class="fas fa-sticky-note"></i> 메모
-                        </span>
-                    </div>
                 </div>
             </div>
         </section>
@@ -719,15 +688,17 @@
                 allEvents[date].forEach(event => {
                     const eventItem = document.createElement('div');
                     eventItem.className = 'event-item';
-                    eventItem.style.borderLeftColor = event.backgroundColor;
+                    eventItem.style.borderLeftColor = '#3b82f6';
+                    eventItem.style.backgroundColor = 'white';
+
+                    const contentLines = event.title.split('\n');
+                    const contentHtml = contentLines.map(line =>
+                        `<div style="padding: 0.25rem 0; color: var(--text-dark);">${line || '&nbsp;'}</div>`
+                    ).join('');
 
                     eventItem.innerHTML = `
                         <div class="event-content">
-                            <div class="event-title-text">${event.title}</div>
-                            ${event.content ? `<div style="color: var(--text-gray); font-size: 0.85rem;">${event.content}</div>` : ''}
-                            <span class="event-category" style="background-color: ${event.backgroundColor}; color: ${event.textColor};">
-                                ${event.category}
-                            </span>
+                            ${contentHtml}
                         </div>
                         <div class="event-actions">
                             <button onclick="deleteEvent(${event.id})" title="삭제">
@@ -743,16 +714,18 @@
         function saveEvent(e) {
             e.preventDefault();
 
-            const categorySelect = document.getElementById('eventCategory');
-            const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+            const content = document.getElementById('eventContent').value;
+            if (!content.trim()) {
+                return;
+            }
 
             const eventData = {
-                title: document.getElementById('eventTitle').value,
-                content: document.getElementById('eventContent').value,
+                title: content,
+                content: null,
                 eventDate: selectedDate,
-                category: categorySelect.value,
-                backgroundColor: selectedOption.dataset.bg,
-                textColor: selectedOption.dataset.text,
+                category: '메모',
+                backgroundColor: '#3b82f6',
+                textColor: '#ffffff',
                 completed: false
             };
 
@@ -771,7 +744,7 @@
             })
             .catch(error => {
                 console.error('Failed to save event:', error);
-                alert('일정 저장에 실패했습니다.');
+                alert('메모 저장에 실패했습니다.');
             });
         }
 
