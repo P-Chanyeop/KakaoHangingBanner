@@ -13,6 +13,9 @@
     <!-- Common CSS -->
     <link rel="stylesheet" th:href="@{/css/common.css}">
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         body {
             overflow: hidden;
@@ -232,13 +235,14 @@
     <header class="main-header">
         <div class="header-container">
             <a href="/" class="logo">
-                🗺️ 참신한 게시대
+                <i class="fas fa-map-marked-alt"></i> 참신한 게시대
             </a>
             <nav>
                 <ul class="nav-menu">
                     <li><a href="/">홈</a></li>
                     <li><a href="/map" class="active">지도 검색</a></li>
                     <li><a href="/stands/new">게시대 등록</a></li>
+                    <li><a href="/admin/buttons">관리자</a></li>
                 </ul>
             </nav>
         </div>
