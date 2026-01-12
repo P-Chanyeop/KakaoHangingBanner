@@ -257,7 +257,7 @@
             }
         }
 
-        // 주소 검색 (VWorld API)
+        // 주소 검색 (백엔드 API 호출)
         function searchAddress() {
             const address = document.getElementById('address').value.trim();
             if (!address) {
@@ -265,40 +265,37 @@
                 return;
             }
 
-            // VWorld Geocoding API 호출
-            const apiKey = '6A14276F-DBF1-35CC-9ECC-5B3E06936C49'; // 공용 키
-            const apiUrl = `https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=${encodeURIComponent(address)}&refine=true&simple=false&format=json&type=road&key=${apiKey}`;
-
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.response.status === 'OK' && data.response.result) {
-                        const result = data.response.result.point;
-                        const lat = parseFloat(result.y);
-                        const lng = parseFloat(result.x);
-
-                        // 지도 이동
-                        map.setView([lat, lng], 16);
-
-                        // 기존 마커 제거
-                        if (marker) {
-                            map.removeLayer(marker);
-                        }
-
-                        // 새 마커 추가
-                        marker = L.marker([lat, lng]).addTo(map);
-
-                        // 폼 필드 업데이트
-                        document.getElementById('latitude').value = lat;
-                        document.getElementById('longitude').value = lng;
-                        document.getElementById('coords-display').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    } else {
-                        alert('주소를 찾을 수 없습니다. 주소를 확인해주세요.');
+            // 백엔드 Geocoding API 호출
+            fetch(`/api/stands/geocode?address=${encodeURIComponent(address)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('주소를 찾을 수 없습니다.');
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    const lat = data.latitude;
+                    const lng = data.longitude;
+
+                    // 지도 이동
+                    map.setView([lat, lng], 16);
+
+                    // 기존 마커 제거
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+
+                    // 새 마커 추가
+                    marker = L.marker([lat, lng]).addTo(map);
+
+                    // 폼 필드 업데이트
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lng;
+                    document.getElementById('coords-display').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
                 })
                 .catch(error => {
                     console.error('주소 검색 실패:', error);
-                    alert('주소 검색 중 오류가 발생했습니다.');
+                    alert('주소를 찾을 수 없습니다. 주소를 확인해주세요.');
                 });
         }
 
