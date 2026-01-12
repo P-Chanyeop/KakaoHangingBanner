@@ -27,6 +27,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+    // Hibernate 의존성 문제 해결
+    implementation 'org.hibernate.common:hibernate-commons-annotations:6.0.6.Final'
+
     // h2 데이터베이스 (개발용)
     runtimeOnly 'com.h2database:h2'
     
