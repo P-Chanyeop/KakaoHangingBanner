@@ -27,11 +27,17 @@ public class WebController {
     }
 
     @GetMapping("/")
-    public String home(Model model) {
+    public String home() {
         logger.info("홈 페이지 요청 받음");
+        return "home";
+    }
+
+    @GetMapping("/map")
+    public String mapSearch(Model model) {
+        logger.info("지도 검색 페이지 요청 받음");
         List<Stand> stands = standService.getAllStands();
         model.addAttribute("stands", stands);
-        
+
         // 지역 목록 추출
         List<String> regions = stands.stream()
                 .map(Stand::getRegion)
@@ -39,8 +45,8 @@ public class WebController {
                 .sorted()
                 .collect(Collectors.toList());
         model.addAttribute("regions", regions);
-        
-        return "index";
+
+        return "map-search";
     }
 
     @GetMapping("/stands")
