@@ -206,48 +206,160 @@
         /* Event Form */
         .event-form-container {
             margin-top: 2rem;
-            padding: 1.5rem;
-            background-color: var(--bg-gray-light);
-            border-radius: 0.5rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 1rem;
             display: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
         }
 
         .event-form-container.active {
             display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .event-form-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #cbd5e1;
         }
 
         .event-form-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 700;
             color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .event-form-title::before {
+            content: "📝";
+            font-size: 1.5rem;
+        }
+
+        #eventForm {
+            margin-bottom: 1.5rem;
+        }
+
+        #eventForm .form-group {
+            margin-bottom: 1rem;
+        }
+
+        #eventForm textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            resize: none;
+        }
+
+        #eventForm textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        #eventForm textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        #eventForm button[type="submit"] {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        #eventForm button[type="submit"]:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }
+
+        #eventForm button[type="submit"]:active {
+            transform: translateY(0);
         }
 
         .event-list {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid #cbd5e1;
+        }
+
+        .event-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .event-list::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .event-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .event-list::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .event-item {
-            background-color: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
+            background: white;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
             margin-bottom: 0.75rem;
             display: flex;
             justify-content: space-between;
             align-items: start;
-            border-left: 4px solid;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .event-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateX(2px);
         }
 
         .event-content {
             flex: 1;
+            line-height: 1.6;
         }
 
         .event-title-text {
@@ -266,20 +378,45 @@
         .event-actions {
             display: flex;
             gap: 0.5rem;
+            margin-left: 1rem;
         }
 
         .event-actions button {
-            padding: 0.5rem;
+            padding: 0.5rem 0.75rem;
             border: none;
-            background: none;
+            background: #fee2e2;
             cursor: pointer;
-            color: var(--text-gray);
+            color: #dc2626;
             font-size: 1rem;
-            transition: color 0.3s;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
         }
 
         .event-actions button:hover {
-            color: var(--primary-blue);
+            background: #fecaca;
+            transform: scale(1.1);
+        }
+
+        .close-form-btn {
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #64748b;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .close-form-btn:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+            transform: rotate(90deg);
         }
 
         .category-badges {
@@ -485,17 +622,17 @@
                     <div class="event-form-container" id="eventFormContainer">
                         <div class="event-form-header">
                             <span class="event-form-title" id="selectedDateTitle">날짜 선택</span>
-                            <button onclick="closeEventForm()" style="background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-gray);">
+                            <button onclick="closeEventForm()" class="close-form-btn">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
 
                         <form id="eventForm" onsubmit="saveEvent(event)">
-                            <div class="form-group" style="margin-bottom: 1rem;">
-                                <textarea id="eventContent" class="form-control" rows="2" required placeholder="메모를 입력하세요 (엔터로 줄바꿈 가능)" style="resize: none;"></textarea>
+                            <div class="form-group">
+                                <textarea id="eventContent" rows="3" required placeholder="메모를 입력하세요 (엔터로 줄바꿈 가능)"></textarea>
                             </div>
 
-                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+                            <button type="submit">
                                 <i class="fas fa-plus"></i> 추가
                             </button>
                         </form>
@@ -758,7 +895,15 @@
             })
             .then(response => {
                 if (response.ok) {
-                    loadEvents();
+                    // Remove event from allEvents
+                    if (allEvents[selectedDate]) {
+                        allEvents[selectedDate] = allEvents[selectedDate].filter(e => e.id !== eventId);
+                        if (allEvents[selectedDate].length === 0) {
+                            delete allEvents[selectedDate];
+                        }
+                    }
+                    // Update UI
+                    renderCalendar();
                     loadEventsForDate(selectedDate);
                 } else {
                     throw new Error('삭제 실패');
