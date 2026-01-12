@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지도 검색 - 참신한 게시대</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <!-- Common CSS -->
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+
+    <style>
+        body {
+            overflow: hidden;
+        }
+
+        .map-container {
+            display: flex;
+            height: calc(100vh - 70px);
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 400px;
+            background-color: var(--bg-white);
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-gray-light);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .stand-item {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background-color: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stand-item:hover {
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow-sm);
+            transform: translateX(4px);
+        }
+
+        .stand-item.active {
+            border-color: var(--primary-blue);
+            background-color: var(--bg-gray-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stand-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stand-address {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .stand-region {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--primary-blue);
+            color: white;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Map */
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Toggle Button */
+        .toggle-btn {
+            position: absolute;
+            left: 400px;
+            top: 20px;
+            z-index: 1000;
+            background-color: var(--bg-white);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .toggle-btn:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar.collapsed + .toggle-btn {
+            left: 20px;
+        }
+
+        /* Stats */
+        .stats-bar {
+            padding: 1rem 1.5rem;
+            background-color: var(--bg-gray-light);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-text {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .stats-number {
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        /* No Results */
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-gray);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .toggle-btn {
+                left: 300px;
+            }
+
+            .sidebar.collapsed + .toggle-btn {
+                left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="/" class="logo">
+                🗺️ 참신한 게시대
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/map" class="active">지도 검색</a></li>
+                    <li><a href="/stands/new">게시대 등록</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Map Container -->
+    <div class="map-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">게시대 검색</h2>
+                <div class="search-box">
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="게시대 이름 또는 주소로 검색...">
+                    <button class="search-btn" id="searchBtn">검색</button>
+                </div>
+            </div>
+
+            <div class="sidebar-content" id="standList">
+                <!-- 게시대 목록이 여기에 동적으로 추가됩니다 -->
+            </div>
+
+            <div class="stats-bar">
+                <span class="stats-text">
+                    총 <span class="stats-number" id="totalCount">0</span>개의 게시대
+                </span>
+            </div>
+        </aside>
+
+        <!-- Toggle Button -->
+        <button class="toggle-btn" id="toggleBtn" title="사이드바 토글">
+            ☰
+        </button>
+
+        <!-- Map -->
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        let map;
+        let markers = [];
+        let allStands = [];
+        let currentStands = [];
+
+        // 지도 초기화
+        function initMap() {
+            // 대구를 중심으로 지도 초기화
+            map = L.map('map').setView([35.8714, 128.6014], 10);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // 게시대 데이터 로드
+            loadStands();
+        }
+
+        // 게시대 데이터 로드
+        function loadStands() {
+            fetch('/api/stands')
+                .then(response => response.json())
+                .then(stands => {
+                    allStands = stands;
+                    currentStands = stands;
+                    displayStands(stands);
+                    displayMarkers(stands);
+                    updateStats(stands.length);
+                })
+                .catch(error => {
+                    console.error('게시대 데이터 로드 실패:', error);
+                });
+        }
+
+        // 게시대 목록 표시
+        function displayStands(stands) {
+            const standList = document.getElementById('standList');
+
+            if (stands.length === 0) {
+                standList.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
+                return;
+            }
+
+            standList.innerHTML = stands.map(stand => `
+                <div class="stand-item" onclick="focusStand(${stand.id}, ${stand.latitude}, ${stand.longitude})">
+                    <div class="stand-name">${stand.name}</div>
+                    <div class="stand-address">${stand.address || '주소 정보 없음'}</div>
+                    <span class="stand-region">${stand.region || '지역 정보 없음'}</span>
+                </div>
+            `).join('');
+        }
+
+        // 지도에 마커 표시
+        function displayMarkers(stands) {
+            // 기존 마커 제거
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // 새 마커 추가
+            stands.forEach(stand => {
+                if (stand.latitude && stand.longitude) {
+                    const marker = L.marker([stand.latitude, stand.longitude])
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="min-width: 200px;">
+                                <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue);">${stand.name}</h3>
+                                <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>주소:</strong> ${stand.address || '없음'}</p>
+                                <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>지역:</strong> ${stand.region || '없음'}</p>
+                                ${stand.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;">${stand.description}</p>` : ''}
+                                <a href="/stands/${stand.id}" style="display: inline-block; margin-top: 0.5rem; padding: 0.5rem 1rem; background-color: var(--primary-blue); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.9rem;">상세보기</a>
+                            </div>
+                        `);
+                    markers.push(marker);
+                }
+            });
+
+            // 마커가 있으면 지도를 마커들이 모두 보이도록 조정
+            if (markers.length > 0) {
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // 특정 게시대에 포커스
+        function focusStand(id, lat, lng) {
+            map.setView([lat, lng], 16);
+
+            // 해당 마커의 팝업 열기
+            const marker = markers.find(m => {
+                const latLng = m.getLatLng();
+                return latLng.lat === lat && latLng.lng === lng;
+            });
+
+            if (marker) {
+                marker.openPopup();
+            }
+
+            // 사이드바 아이템 활성화
+            document.querySelectorAll('.stand-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        // 검색 기능
+        function searchStands() {
+            const keyword = document.getElementById('searchInput').value.trim();
+
+            if (!keyword) {
+                currentStands = allStands;
+                displayStands(allStands);
+                displayMarkers(allStands);
+                updateStats(allStands.length);
+                return;
+            }
+
+            fetch(`/api/stands/search?keyword=${encodeURIComponent(keyword)}`)
+                .then(response => response.json())
+                .then(stands => {
+                    currentStands = stands;
+                    displayStands(stands);
+                    displayMarkers(stands);
+                    updateStats(stands.length);
+                })
+                .catch(error => {
+                    console.error('검색 실패:', error);
+                    alert('검색 중 오류가 발생했습니다.');
+                });
+        }
+
+        // 통계 업데이트
+        function updateStats(count) {
+            document.getElementById('totalCount').textContent = count;
+        }
+
+        // 사이드바 토글
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+
+            // 지도 크기 재조정
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 300);
+        }
+
+        // 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+
+            document.getElementById('toggleBtn').addEventListener('click', toggleSidebar);
+            document.getElementById('searchBtn').addEventListener('click', searchStands);
+
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchStands();
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

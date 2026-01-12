@@ -7,149 +7,207 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
     <style>
         .form-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 2.5rem;
+            background-color: var(--bg-white);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-lg);
         }
-        
+
+        .form-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
         .form-group {
             margin-bottom: 1.5rem;
         }
-        
-        .form-group label {
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text-dark);
         }
-        
+
+        .form-label .required {
+            color: #ef4444;
+        }
+
         .form-control {
             width: 100%;
-            padding: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.875rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
             font-size: 1rem;
+            transition: border-color 0.3s ease;
         }
-        
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
         textarea.form-control {
             min-height: 120px;
             resize: vertical;
         }
-        
+
         .map-container {
-            height: 400px;
+            height: 450px;
             margin: 1.5rem 0;
-            border-radius: 8px;
+            border-radius: 0.75rem;
             overflow: hidden;
+            border: 2px solid var(--border-color);
         }
-        
+
+        .coordinates-display {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background-color: var(--bg-gray-light);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .coordinates-value {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
         .form-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 2rem;
+            margin-top: 2.5rem;
+            justify-content: center;
         }
-        
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-        
-        .btn-primary {
-            background-color: #4285f4;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background-color: #f1f3f4;
-            color: #333;
-        }
-        
-        .coordinates-display {
+
+        .help-text {
+            font-size: 0.875rem;
+            color: var(--text-gray);
             margin-top: 0.5rem;
-            font-size: 0.9rem;
-            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-container {
+                margin: 1.5rem;
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>지역별 게시대 지도</h1>
-        <nav>
-            <ul>
-                <li><a href="/" class="active">지도</a></li>
-                <li><a href="#" id="about-link">소개</a></li>
-            </ul>
-        </nav>
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="/" class="logo">
+                🗺️ 참신한 게시대
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/map">지도 검색</a></li>
+                    <li><a href="/stands/new" class="active">게시대 등록</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
 
     <main>
         <div class="form-container">
-            <h2 th:text="${stand.id != null ? '게시대 수정' : '새 게시대 등록'}">게시대 폼</h2>
-            
+            <h2 class="form-title" th:text="${stand.id != null ? '게시대 수정' : '새 게시대 등록'}">게시대 폼</h2>
+
             <form id="stand-form" th:action="@{${stand.id != null ? '/api/stands/' + stand.id : '/api/stands'}}" method="post">
                 <input type="hidden" id="id" name="id" th:value="${stand.id}">
                 <input type="hidden" id="latitude" name="latitude" th:value="${stand.latitude}">
                 <input type="hidden" id="longitude" name="longitude" th:value="${stand.longitude}">
-                
-                <div class="form-group">
-                    <label for="name">게시대 이름</label>
-                    <input type="text" class="form-control" id="name" name="name" th:value="${stand.name}" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="region">지역</label>
-                    <input type="text" class="form-control" id="region" name="region" th:value="${stand.region}" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="address">주소</label>
-                    <input type="text" class="form-control" id="address" name="address" th:value="${stand.address}" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>위치 (지도에서 클릭하여 선택)</label>
-                    <div id="map-picker" class="map-container"></div>
-                    <div class="coordinates-display">
-                        선택된 좌표: <span id="coords-display">
-                            <span th:if="${stand.latitude != null && stand.longitude != null}" 
-                                  th:text="${stand.latitude + ', ' + stand.longitude}"></span>
-                            <span th:unless="${stand.latitude != null && stand.longitude != null}">선택되지 않음</span>
-                        </span>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name" class="form-label">게시대 이름 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" th:value="${stand.name}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="region" class="form-label">지역 <span class="required">*</span></label>
+                        <select class="form-control" id="region" name="region" required>
+                            <option value="">지역 선택</option>
+                            <option value="대구" th:selected="${stand.region == '대구'}">대구</option>
+                            <option value="경북" th:selected="${stand.region == '경북'}">경북</option>
+                            <option value="경남" th:selected="${stand.region == '경남'}">경남</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="address" class="form-label">주소 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="address" name="address" th:value="${stand.address}" required>
+                        <p class="help-text">게시대의 정확한 주소를 입력해주세요</p>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">위치 선택 <span class="required">*</span></label>
+                        <div id="map-picker" class="map-container"></div>
+                        <div class="coordinates-display">
+                            선택된 좌표: <span class="coordinates-value" id="coords-display">
+                                <span th:if="${stand.latitude != null && stand.longitude != null}"
+                                      th:text="${stand.latitude + ', ' + stand.longitude}"></span>
+                                <span th:unless="${stand.latitude != null && stand.longitude != null}">지도를 클릭하여 위치를 선택하세요</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="description" class="form-label">설명</label>
+                        <textarea class="form-control" id="description" name="description" th:text="${stand.description}"
+                                  placeholder="게시대에 대한 추가 정보를 입력하세요 (선택사항)"></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="imageUrl" class="form-label">이미지 URL</label>
+                        <input type="url" class="form-control" id="imageUrl" name="imageUrl" th:value="${stand.imageUrl}"
+                               placeholder="https://example.com/image.jpg">
+                        <p class="help-text">게시대 사진의 URL을 입력하세요 (선택사항)</p>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="description">설명</label>
-                    <textarea class="form-control" id="description" name="description" th:text="${stand.description}"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="imageUrl">이미지 URL</label>
-                    <input type="url" class="form-control" id="imageUrl" name="imageUrl" th:value="${stand.imageUrl}">
-                </div>
-                
+
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="history.back()">취소</button>
-                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-outline" onclick="window.location.href='/map'">취소</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span th:text="${stand.id != null ? '수정하기' : '등록하기'}">등록하기</span>
+                    </button>
                 </div>
             </form>
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2025 지역별 게시대 지도. All rights reserved.</p>
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2026 참신한 게시대 현수막 아지트. All rights reserved.</p>
+        </div>
     </footer>
 
     <script th:inline="javascript">
