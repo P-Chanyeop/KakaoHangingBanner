@@ -8,8 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 게시대 API 컨트롤러
@@ -22,10 +25,12 @@ public class StandApiController {
 
     private static final Logger logger = LoggerFactory.getLogger(StandApiController.class);
     private final StandService standService;
+    private final RestTemplate restTemplate;
 
     @Autowired
     public StandApiController(StandService standService) {
         this.standService = standService;
+        this.restTemplate = new RestTemplate();
         logger.info("StandApiController 초기화됨");
     }
 
@@ -130,5 +135,63 @@ public class StandApiController {
         standService.deleteStand(id);
         logger.info("게시대 삭제 완료. ID: {}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 주소를 좌표로 변환합니다 (Geocoding).
+     * VWorld API를 통해 주소를 위도/경도로 변환합니다.
+     *
+     * @param address 변환할 주소
+     * @return 좌표 정보 (latitude, longitude)
+     */
+    @GetMapping("/geocode")
+    public ResponseEntity<Map<String, Object>> geocodeAddress(@RequestParam String address) {
+        logger.info("GET /api/stands/geocode 요청 받음. address={}", address);
+
+        try {
+            // VWorld API 호출
+            String apiKey = "6C9C84F6-D3BA-3730-9864-80818F5B8D8F";
+            String apiUrl = String.format(
+                "https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=%s&refine=true&simple=false&format=json&type=road&key=%s",
+                java.net.URLEncoder.encode(address, "UTF-8"),
+                apiKey
+            );
+
+            logger.info("VWorld API 호출: {}", apiUrl);
+
+            // API 호출
+            Map<String, Object> vworldResponse = restTemplate.getForObject(apiUrl, Map.class);
+
+            logger.info("VWorld API 응답: {}", vworldResponse);
+
+            // 응답 파싱
+            if (vworldResponse != null && vworldResponse.containsKey("response")) {
+                Map<String, Object> response = (Map<String, Object>) vworldResponse.get("response");
+                String status = (String) response.get("status");
+
+                if ("OK".equals(status) && response.containsKey("result")) {
+                    Map<String, Object> result = (Map<String, Object>) response.get("result");
+                    Map<String, Object> point = (Map<String, Object>) result.get("point");
+
+                    Map<String, Object> coordinates = new HashMap<>();
+                    coordinates.put("latitude", Double.parseDouble(point.get("y").toString()));
+                    coordinates.put("longitude", Double.parseDouble(point.get("x").toString()));
+
+                    logger.info("지오코딩 성공. 좌표: {}", coordinates);
+                    return ResponseEntity.ok(coordinates);
+                }
+            }
+
+            logger.warn("주소를 찾을 수 없음: {}", address);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "주소를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+
+        } catch (Exception e) {
+            logger.error("지오코딩 실패", e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "지오코딩 처리 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 }
