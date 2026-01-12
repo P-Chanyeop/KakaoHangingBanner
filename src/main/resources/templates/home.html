@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>참신한 게시대 현수막 아지트 - 홈</title>
     <link rel="stylesheet" th:href="@{/css/common.css}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Hero Section */
         .hero-section {
             position: relative;
-            height: 500px;
+            height: 400px;
             background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
             display: flex;
             align-items: center;
@@ -26,58 +28,67 @@
         }
 
         .hero-title {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 1rem;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
 
         .hero-subtitle {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             margin-bottom: 2rem;
             opacity: 0.95;
         }
 
         .hero-image {
             width: 100%;
-            height: 400px;
+            height: 300px;
             background: var(--bg-gray);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--text-gray);
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             border-radius: 1rem;
             margin: 2rem 0;
         }
 
-        /* Button Grid */
+        /* Button Grid - 더 작은 크기 */
         .button-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin: 3rem 0;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
         }
 
         .button-grid .btn {
-            padding: 1.5rem;
-            font-size: 1.1rem;
-            height: 100%;
+            padding: 1rem 0.75rem;
+            font-size: 0.9rem;
+            height: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
+            min-height: 90px;
         }
 
         .btn-icon {
-            font-size: 2rem;
+            font-size: 1.8rem;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+            font-size: 1.75rem;
+            font-weight: 700;
         }
 
         /* Calendar Section */
         .calendar-section {
             background-color: var(--bg-gray-light);
-            padding: 4rem 0;
-            margin-top: 4rem;
+            padding: 3rem 0;
+            margin-top: 3rem;
         }
 
         .calendar-container {
@@ -86,47 +97,47 @@
             padding: 2rem;
             box-shadow: var(--shadow-md);
             text-align: center;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         .calendar-placeholder {
             width: 100%;
-            height: 400px;
+            height: 350px;
             background: var(--bg-gray);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--text-gray);
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             border-radius: 0.5rem;
             margin-top: 1rem;
         }
 
         /* Features Section */
         .features-section {
-            margin: 4rem 0;
+            margin: 3rem 0;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
         }
 
         .feature-card {
             text-align: center;
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
         .feature-icon {
-            font-size: 3rem;
+            font-size: 2.5rem;
             color: var(--primary-blue);
             margin-bottom: 1rem;
         }
 
         .feature-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: var(--text-dark);
@@ -134,11 +145,18 @@
 
         .feature-description {
             color: var(--text-gray);
+            font-size: 0.95rem;
+        }
+
+        .no-buttons {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-gray);
         }
 
         @media (max-width: 768px) {
             .hero-title {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
 
             .hero-subtitle {
@@ -146,7 +164,17 @@
             }
 
             .button-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .button-grid .btn {
+                font-size: 0.85rem;
+                padding: 0.85rem 0.5rem;
+                min-height: 80px;
+            }
+
+            .btn-icon {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -156,13 +184,14 @@
     <header class="main-header">
         <div class="header-container">
             <a href="/" class="logo">
-                🗺️ 참신한 게시대
+                <i class="fas fa-map-marked-alt"></i> 참신한 게시대
             </a>
             <nav>
                 <ul class="nav-menu">
                     <li><a href="/" class="active">홈</a></li>
                     <li><a href="/map">지도 검색</a></li>
                     <li><a href="/stands/new">게시대 등록</a></li>
+                    <li><a href="/admin/buttons">관리자</a></li>
                 </ul>
             </nav>
         </div>
@@ -173,8 +202,8 @@
         <div class="hero-content">
             <h1 class="hero-title">참신한 게시대 현수막 아지트</h1>
             <p class="hero-subtitle">지역별 게시대를 쉽게 찾고, 현수막을 효율적으로 관리하세요</p>
-            <a href="/map" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 2rem;">
-                지도에서 게시대 찾기 →
+            <a href="/map" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.9rem 1.8rem;">
+                <i class="fas fa-search"></i> 지도에서 게시대 찾기
             </a>
         </div>
     </section>
@@ -184,6 +213,7 @@
         <!-- Hero Image 1 -->
         <div class="container">
             <div class="hero-image">
+                <i class="fas fa-image" style="font-size: 3rem; opacity: 0.3; margin-right: 1rem;"></i>
                 <span>Hero Image 1 (이미지 영역)</span>
             </div>
         </div>
@@ -191,42 +221,19 @@
         <!-- Orange Buttons Section -->
         <section class="section">
             <div class="container">
-                <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text-dark); font-size: 2rem;">
-                    경북협회사이트
-                </h2>
-                <div class="button-grid">
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">📋</span>
-                        <span>이동링크 버튼</span>
+                <h2 class="section-title">경북협회사이트</h2>
+                <div class="button-grid" th:if="${orangeButtons != null and !orangeButtons.isEmpty()}">
+                    <a th:each="button : ${orangeButtons}"
+                       th:href="${button.url}"
+                       class="btn btn-orange"
+                       target="_blank">
+                        <i th:class="${button.iconClass} + ' btn-icon'"></i>
+                        <span th:text="${button.name}"></span>
                     </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">📊</span>
-                        <span>추후 추가가능하게</span>
-                    </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">📍</span>
-                        <span>버튼 1</span>
-                    </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">🎯</span>
-                        <span>버튼 2</span>
-                    </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">📢</span>
-                        <span>버튼 3</span>
-                    </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">🔔</span>
-                        <span>버튼 4</span>
-                    </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">💼</span>
-                        <span>버튼 5</span>
-                    </a>
-                    <a href="#" class="btn btn-orange">
-                        <span class="btn-icon">📝</span>
-                        <span>버튼 6</span>
-                    </a>
+                </div>
+                <div class="no-buttons" th:if="${orangeButtons == null or orangeButtons.isEmpty()}">
+                    <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>등록된 버튼이 없습니다. <a href="/admin/buttons" style="color: var(--primary-blue); text-decoration: underline;">관리자 페이지</a>에서 버튼을 추가하세요.</p>
                 </div>
             </div>
         </section>
@@ -234,6 +241,7 @@
         <!-- Hero Image 2 -->
         <div class="container">
             <div class="hero-image">
+                <i class="fas fa-image" style="font-size: 3rem; opacity: 0.3; margin-right: 1rem;"></i>
                 <span>Hero Image 2 (이미지 영역)</span>
             </div>
         </div>
@@ -241,42 +249,19 @@
         <!-- Green Buttons Section -->
         <section class="section">
             <div class="container">
-                <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text-dark); font-size: 2rem;">
-                    경남협회사이트
-                </h2>
-                <div class="button-grid">
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">📋</span>
-                        <span>이동링크 버튼</span>
+                <h2 class="section-title">경남협회사이트</h2>
+                <div class="button-grid" th:if="${greenButtons != null and !greenButtons.isEmpty()}">
+                    <a th:each="button : ${greenButtons}"
+                       th:href="${button.url}"
+                       class="btn btn-green"
+                       target="_blank">
+                        <i th:class="${button.iconClass} + ' btn-icon'"></i>
+                        <span th:text="${button.name}"></span>
                     </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">📊</span>
-                        <span>추후 추가가능하게</span>
-                    </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">📍</span>
-                        <span>버튼 1</span>
-                    </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">🎯</span>
-                        <span>버튼 2</span>
-                    </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">📢</span>
-                        <span>버튼 3</span>
-                    </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">🔔</span>
-                        <span>버튼 4</span>
-                    </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">💼</span>
-                        <span>버튼 5</span>
-                    </a>
-                    <a href="#" class="btn btn-green">
-                        <span class="btn-icon">📝</span>
-                        <span>버튼 6</span>
-                    </a>
+                </div>
+                <div class="no-buttons" th:if="${greenButtons == null or greenButtons.isEmpty()}">
+                    <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>등록된 버튼이 없습니다. <a href="/admin/buttons" style="color: var(--primary-blue); text-decoration: underline;">관리자 페이지</a>에서 버튼을 추가하세요.</p>
                 </div>
             </div>
         </section>
@@ -284,25 +269,24 @@
         <!-- Calendar Section -->
         <section class="calendar-section">
             <div class="container">
-                <h2 style="text-align: center; color: var(--text-dark); font-size: 2rem;">
-                    2026년 1월 일정
-                </h2>
+                <h2 class="section-title">2026년 1월 일정</h2>
                 <div class="calendar-container">
                     <div class="calendar-placeholder">
-                        캘린더 위젯 영역 (추후 구현)
+                        <i class="fas fa-calendar-alt" style="font-size: 3rem; opacity: 0.3; margin-right: 1rem;"></i>
+                        <span>캘린더 위젯 영역 (추후 구현)</span>
                     </div>
                     <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                         <span style="padding: 0.5rem 1rem; background-color: var(--accent-orange); color: white; border-radius: 0.5rem;">
-                            지불할 렌트는 아아무라 뭐...?
+                            <i class="fas fa-money-bill-wave"></i> 지불할 렌트
                         </span>
                         <span style="padding: 0.5rem 1rem; background-color: var(--accent-green); color: white; border-radius: 0.5rem;">
-                            게시대관리
+                            <i class="fas fa-tasks"></i> 게시대관리
                         </span>
                         <span style="padding: 0.5rem 1rem; background-color: var(--primary-blue); color: white; border-radius: 0.5rem;">
-                            공지사항추가
+                            <i class="fas fa-bullhorn"></i> 공지사항추가
                         </span>
                         <span style="padding: 0.5rem 1rem; background-color: var(--text-gray); color: white; border-radius: 0.5rem;">
-                            메모사항추가
+                            <i class="fas fa-sticky-note"></i> 메모사항추가
                         </span>
                     </div>
                 </div>
@@ -312,33 +296,31 @@
         <!-- Features Section -->
         <section class="features-section">
             <div class="container">
-                <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text-dark); font-size: 2rem;">
-                    주요 기능
-                </h2>
+                <h2 class="section-title">주요 기능</h2>
                 <div class="features-grid">
                     <div class="feature-card card">
-                        <div class="feature-icon">🗺️</div>
+                        <i class="fas fa-map-marked-alt feature-icon"></i>
                         <h3 class="feature-title">지도 기반 검색</h3>
                         <p class="feature-description">
                             지도에서 게시대 위치를 한눈에 확인하고 검색하세요
                         </p>
                     </div>
                     <div class="feature-card card">
-                        <div class="feature-icon">📍</div>
+                        <i class="fas fa-map-pin feature-icon"></i>
                         <h3 class="feature-title">위치 관리</h3>
                         <p class="feature-description">
                             게시대의 정확한 위치와 정보를 관리할 수 있습니다
                         </p>
                     </div>
                     <div class="feature-card card">
-                        <div class="feature-icon">🔍</div>
+                        <i class="fas fa-search feature-icon"></i>
                         <h3 class="feature-title">빠른 검색</h3>
                         <p class="feature-description">
                             주소나 게시대 이름으로 빠르게 검색할 수 있습니다
                         </p>
                     </div>
                     <div class="feature-card card">
-                        <div class="feature-icon">📊</div>
+                        <i class="fas fa-chart-line feature-icon"></i>
                         <h3 class="feature-title">효율적 관리</h3>
                         <p class="feature-description">
                             현수막 게시 일정과 정보를 효율적으로 관리하세요

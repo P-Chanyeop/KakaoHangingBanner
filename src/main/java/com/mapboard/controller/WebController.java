@@ -2,6 +2,7 @@ package com.mapboard.controller;
 
 import com.mapboard.entity.Stand;
 import com.mapboard.service.StandService;
+import com.mapboard.service.ButtonLinkService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +20,21 @@ public class WebController {
 
     private static final Logger logger = LoggerFactory.getLogger(WebController.class);
     private final StandService standService;
+    private final ButtonLinkService buttonLinkService;
 
     @Autowired
-    public WebController(StandService standService) {
+    public WebController(StandService standService, ButtonLinkService buttonLinkService) {
         this.standService = standService;
+        this.buttonLinkService = buttonLinkService;
         logger.info("WebController 초기화됨");
     }
 
     @GetMapping("/")
-    public String home() {
+    public String home(Model model) {
         logger.info("홈 페이지 요청 받음");
+        // 버튼 링크 데이터 추가
+        model.addAttribute("orangeButtons", buttonLinkService.getButtonLinksByType("orange"));
+        model.addAttribute("greenButtons", buttonLinkService.getButtonLinksByType("green"));
         return "home";
     }
 
@@ -114,5 +120,12 @@ public class WebController {
     public String apiTest() {
         logger.info("API 테스트 페이지 요청 받음");
         return "api-test";
+    }
+
+    @GetMapping("/admin/buttons")
+    public String adminButtons(Model model) {
+        logger.info("관리자 버튼 관리 페이지 요청 받음");
+        model.addAttribute("buttonLinks", buttonLinkService.getAllButtonLinks());
+        return "admin-buttons";
     }
 }
