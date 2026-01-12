@@ -8,6 +8,8 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     <link rel="stylesheet" th:href="@{/css/common.css}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
@@ -125,13 +127,14 @@
     <header class="main-header">
         <div class="header-container">
             <a href="/" class="logo">
-                🗺️ 참신한 게시대
+                <i class="fas fa-map-marked-alt"></i> 참신한 게시대
             </a>
             <nav>
                 <ul class="nav-menu">
                     <li><a href="/">홈</a></li>
                     <li><a href="/map">지도 검색</a></li>
                     <li><a href="/stands/new" class="active">게시대 등록</a></li>
+                    <li><a href="/admin/buttons">관리자</a></li>
                 </ul>
             </nav>
         </div>
@@ -156,9 +159,27 @@
                         <label for="region" class="form-label">지역 <span class="required">*</span></label>
                         <select class="form-control" id="region" name="region" required>
                             <option value="">지역 선택</option>
-                            <option value="대구" th:selected="${stand.region == '대구'}">대구</option>
-                            <option value="경북" th:selected="${stand.region == '경북'}">경북</option>
-                            <option value="경남" th:selected="${stand.region == '경남'}">경남</option>
+                            <option value="대구광역시" th:selected="${stand.region == '대구광역시'}">대구광역시</option>
+                            <option value="군위군" th:selected="${stand.region == '군위군'}">군위군</option>
+                            <option value="칠곡군" th:selected="${stand.region == '칠곡군'}">칠곡군</option>
+                            <option value="상주시" th:selected="${stand.region == '상주시'}">상주시</option>
+                            <option value="김천시" th:selected="${stand.region == '김천시'}">김천시</option>
+                            <option value="고령군" th:selected="${stand.region == '고령군'}">고령군</option>
+                            <option value="경산시" th:selected="${stand.region == '경산시'}">경산시</option>
+                            <option value="영천시" th:selected="${stand.region == '영천시'}">영천시</option>
+                            <option value="포항시" th:selected="${stand.region == '포항시'}">포항시</option>
+                            <option value="문경시" th:selected="${stand.region == '문경시'}">문경시</option>
+                            <option value="청도군" th:selected="${stand.region == '청도군'}">청도군</option>
+                            <option value="안동시" th:selected="${stand.region == '안동시'}">안동시</option>
+                            <option value="예천군" th:selected="${stand.region == '예천군'}">예천군</option>
+                            <option value="영주시" th:selected="${stand.region == '영주시'}">영주시</option>
+                            <option value="의성군" th:selected="${stand.region == '의성군'}">의성군</option>
+                            <option value="청송군" th:selected="${stand.region == '청송군'}">청송군</option>
+                            <option value="봉화군" th:selected="${stand.region == '봉화군'}">봉화군</option>
+                            <option value="영덕군" th:selected="${stand.region == '영덕군'}">영덕군</option>
+                            <option value="울진군" th:selected="${stand.region == '울진군'}">울진군</option>
+                            <option value="경주시" th:selected="${stand.region == '경주시'}">경주시</option>
+                            <option value="영양군" th:selected="${stand.region == '영양군'}">영양군</option>
                         </select>
                     </div>
 
@@ -166,6 +187,35 @@
                         <label for="address" class="form-label">주소 <span class="required">*</span></label>
                         <input type="text" class="form-control" id="address" name="address" th:value="${stand.address}" required>
                         <p class="help-text">게시대의 정확한 주소를 입력해주세요</p>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="quickRegionSelect" class="form-label">빠른 지역 이동</label>
+                        <select class="form-control" id="quickRegionSelect" onchange="moveMapToRegion(this.value)">
+                            <option value="">지도를 이동할 지역 선택</option>
+                            <option value="35.8714,128.6014">대구광역시</option>
+                            <option value="36.2428,128.5731">군위군</option>
+                            <option value="35.9952,128.4019">칠곡군</option>
+                            <option value="36.4109,128.1591">상주시</option>
+                            <option value="36.1399,128.1138">김천시</option>
+                            <option value="35.7273,128.2623">고령군</option>
+                            <option value="35.8250,128.7414">경산시</option>
+                            <option value="35.9733,128.9386">영천시</option>
+                            <option value="36.0190,129.3435">포항시</option>
+                            <option value="36.5864,128.1867">문경시</option>
+                            <option value="35.6476,128.7355">청도군</option>
+                            <option value="36.5684,128.7294">안동시</option>
+                            <option value="36.6573,128.4519">예천군</option>
+                            <option value="36.8056,128.6238">영주시</option>
+                            <option value="36.3524,128.6969">의성군</option>
+                            <option value="36.4364,129.0572">청송군</option>
+                            <option value="36.8930,128.7324">봉화군</option>
+                            <option value="36.4150,129.3655">영덕군</option>
+                            <option value="36.9931,129.4006">울진군</option>
+                            <option value="35.8562,129.2247">경주시</option>
+                            <option value="36.6667,129.1124">영양군</option>
+                        </select>
+                        <p class="help-text">지역을 선택하면 지도가 해당 지역으로 이동합니다</p>
                     </div>
 
                     <div class="form-group full-width">
@@ -216,12 +266,23 @@
         let marker;
         const stand = /*[[${stand}]]*/ {};
         
+        // 지역으로 지도 이동
+        function moveMapToRegion(coords) {
+            if (!coords) return;
+
+            const [lat, lng] = coords.split(',').map(Number);
+            map.setView([lat, lng], 13);
+
+            // 선택 초기화
+            document.getElementById('quickRegionSelect').value = '';
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // 지도 초기화
-            const defaultCenter = stand.latitude && stand.longitude 
-                ? [stand.latitude, stand.longitude] 
-                : [37.5665, 126.9780]; // 서울 중심 좌표
-            
+            const defaultCenter = stand.latitude && stand.longitude
+                ? [stand.latitude, stand.longitude]
+                : [35.8714, 128.6014]; // 대구 중심 좌표
+
             map = L.map('map-picker').setView(defaultCenter, 14);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
