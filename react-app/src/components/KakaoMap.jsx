@@ -35,7 +35,7 @@ function KakaoMap({
     const container = mapRef.current;
     const options = {
       center: new window.kakao.maps.LatLng(center.lat, center.lng),
-      level: 13 // 한국 전체가 보이도록 높은 레벨 설정
+      level: 19 // 한국 전체가 보이도록 최대 레벨 설정
     };
 
     mapInstance.current = new window.kakao.maps.Map(container, options);
@@ -105,7 +105,8 @@ function KakaoMap({
       const moveLatLon = new window.kakao.maps.LatLng(center.lat, center.lng);
       mapInstance.current.setCenter(moveLatLon);
       // 카카오 지도는 레벨이 낮을수록 확대됨 (다른 지도와 반대)
-      const kakaoLevel = zoom === 13 ? 6 : zoom === 16 ? 3 : Math.max(1, 15 - zoom);
+      // 초기 로딩 시에는 한국 전체가 보이도록 높은 레벨 사용
+      const kakaoLevel = zoom === 7 ? 13 : zoom === 13 ? 6 : zoom === 16 ? 3 : zoom === 12 ? 6 : Math.max(1, 15 - zoom);
       mapInstance.current.setLevel(kakaoLevel);
     }
   }, [center, zoom]);
