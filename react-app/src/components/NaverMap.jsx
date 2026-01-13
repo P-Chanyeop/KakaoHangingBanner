@@ -6,7 +6,7 @@ function NaverMap({
   markers = [],
   onMapClick,
   style = { width: '100%', height: '100%' },
-  showRoadview = true
+  showRoadview = false // 로드뷰 기본 비활성화 (API 인증 후 활성화)
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -15,16 +15,20 @@ function NaverMap({
   const panoramaInstance = useRef(null);
   const markersRef = useRef([]);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
   // 네이버맵 초기화
   useEffect(() => {
     if (!window.naver || !window.naver.maps) {
-      console.error('네이버맵 API가 로드되지 않았습니다. index.html에 Client ID (k5oupq96xi)가 설정되어 있는지 확인하세요.');
+      const errorMsg = '네이버맵 API가 로드되지 않았습니다. 페이지를 새로고침하거나 네트워크 연결을 확인하세요.';
+      console.error(errorMsg);
+      setApiError(errorMsg);
       return;
     }
 
-    // Dynamic Map 옵션 (공식 문서 기준)
-    const mapOptions = {
+    try {
+      // Dynamic Map 옵션 (공식 문서 기준)
+      const mapOptions = {
       center: new window.naver.maps.LatLng(center.lat, center.lng),
       zoom: zoom,
       minZoom: 6,
@@ -104,16 +108,21 @@ function NaverMap({
       }
     }
 
-    return () => {
-      if (mapInstance.current) {
-        markersRef.current.forEach(marker => marker.setMap(null));
-        markersRef.current = [];
-        window.naver.maps.Event.clearInstanceListeners(mapInstance.current);
-      }
-      if (panoramaInstance.current) {
-        window.naver.maps.Event.clearInstanceListeners(panoramaInstance.current);
-      }
-    };
+      return () => {
+        if (mapInstance.current) {
+          markersRef.current.forEach(marker => marker.setMap(null));
+          markersRef.current = [];
+          window.naver.maps.Event.clearInstanceListeners(mapInstance.current);
+        }
+        if (panoramaInstance.current) {
+          window.naver.maps.Event.clearInstanceListeners(panoramaInstance.current);
+        }
+      };
+    } catch (error) {
+      console.error('네이버 지도 초기화 오류:', error);
+      const errorMsg = `네이버 지도 API 오류: ${error.message}\n\n해결 방법:\n1. 네이버 클라우드 플랫폼에서 Web 서비스 URL 설정\n2. http://localhost:3000 및 http://localhost:3000/* 추가\n3. 설정 저장 후 1-2분 대기`;
+      setApiError(errorMsg);
+    }
   }, []);
 
   // 중심 이동
@@ -219,6 +228,51 @@ function NaverMap({
       panoramaInstance.current.setPosition(center);
     }
   };
+
+  // 에러 표시
+  if (apiError) {
+    return (
+      <div style={{
+        ...style,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f8f9fa',
+        padding: '20px',
+        border: '2px solid #dc3545',
+        borderRadius: '8px'
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: '500px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
+          <h3 style={{ color: '#dc3545', marginBottom: '15px' }}>네이버 지도 API 인증 실패</h3>
+          <pre style={{
+            backgroundColor: '#fff',
+            padding: '15px',
+            borderRadius: '5px',
+            textAlign: 'left',
+            fontSize: '14px',
+            lineHeight: '1.6',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}>{apiError}</pre>
+          <div style={{ marginTop: '20px', fontSize: '14px', color: '#6c757d' }}>
+            <p><strong>Web 서비스 URL 설정 방법:</strong></p>
+            <ol style={{ textAlign: 'left', marginTop: '10px' }}>
+              <li>네이버 클라우드 플랫폼 콘솔 접속</li>
+              <li>AI·NAVER API → AI·Application Service → Maps → Application</li>
+              <li>softcat 애플리케이션 클릭</li>
+              <li>Web 서비스 URL에 다음 추가:
+                <br/><code>http://localhost:3000</code>
+                <br/><code>http://localhost:3000/*</code>
+              </li>
+              <li>저장 후 1-2분 대기</li>
+              <li>페이지 새로고침</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} style={{ position: 'relative', ...style }}>
