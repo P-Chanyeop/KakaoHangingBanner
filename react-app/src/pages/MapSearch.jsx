@@ -50,7 +50,23 @@ function MapSearch() {
     initMap();
     loadStands();
 
+    // 지도 크기 강제 재계산
+    const handleResize = () => {
+      if (mapInstance.current) {
+        mapInstance.current.invalidateSize();
+      }
+    };
+
+    // 초기 렌더링 후 지도 크기 재계산
+    const timer = setTimeout(() => {
+      handleResize();
+    }, 100);
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
@@ -82,6 +98,13 @@ function MapSearch() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(mapInstance.current);
+
+    // 지도 초기화 후 크기 재계산
+    setTimeout(() => {
+      if (mapInstance.current) {
+        mapInstance.current.invalidateSize();
+      }
+    }, 100);
   };
 
   const loadStands = async () => {
