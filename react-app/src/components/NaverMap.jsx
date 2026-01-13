@@ -5,12 +5,18 @@ function NaverMap({
   zoom = 7,
   markers = [],
   onMapClick,
-  style = { width: '100%', height: '100%' }
+  style = { width: '100%', height: '100%' },
+  showRoadview = true
 }) {
+  const containerRef = useRef(null);
   const mapRef = useRef(null);
+  const panoRef = useRef(null);
   const mapInstance = useRef(null);
+  const panoInstance = useRef(null);
   const markersRef = useRef([]);
   const [apiError, setApiError] = useState(null);
+  const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
+  const [roadviewAvailable, setRoadviewAvailable] = useState(true);
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -61,11 +67,63 @@ function NaverMap({
         });
       }
 
+      // 파노라마 초기화 (showRoadview가 true일 때)
+      if (showRoadview && window.naver.maps.Panorama) {
+        try {
+          const panoOptions = {
+            position: new window.naver.maps.LatLng(center.lat, center.lng),
+            pov: {
+              pan: -135,
+              tilt: 29,
+              fov: 100
+            },
+            visible: false
+          };
+
+          panoInstance.current = new window.naver.maps.Panorama(panoRef.current, panoOptions);
+
+          // 파노라마 초기화 완료 이벤트
+          window.naver.maps.Event.addListener(panoInstance.current, 'init', function() {
+            console.log('파노라마 초기화 완료');
+          });
+
+          // 파노라마 상태 이벤트
+          window.naver.maps.Event.addListener(panoInstance.current, 'pano_status', function(status) {
+            console.log('파노라마 상태:', status);
+            if (status === 'ERROR') {
+              setRoadviewAvailable(false);
+              console.warn('이 위치에서는 로드뷰를 사용할 수 없습니다.');
+            } else {
+              setRoadviewAvailable(true);
+            }
+          });
+
+          // 파노라마 변경 이벤트
+          window.naver.maps.Event.addListener(panoInstance.current, 'pano_changed', function() {
+            const location = panoInstance.current.getLocation();
+            console.log('파노라마 위치:', location);
+          });
+
+          // 파노라마 시야 변경 이벤트
+          window.naver.maps.Event.addListener(panoInstance.current, 'pov_changed', function() {
+            const pov = panoInstance.current.getPov();
+            console.log('파노라마 시야:', pov);
+          });
+
+        } catch (error) {
+          console.error('파노라마 초기화 오류:', error);
+          setRoadviewAvailable(false);
+        }
+      }
+
       return () => {
         if (mapInstance.current) {
           markersRef.current.forEach(marker => marker.setMap(null));
           markersRef.current = [];
           window.naver.maps.Event.clearInstanceListeners(mapInstance.current);
+        }
+        if (panoInstance.current) {
+          window.naver.maps.Event.clearInstanceListeners(panoInstance.current);
         }
       };
     } catch (error) {
@@ -137,6 +195,27 @@ function NaverMap({
     }
   }, [markers]);
 
+  // 로드뷰 토글
+  const toggleRoadview = () => {
+    if (!panoInstance.current) {
+      alert('로드뷰를 사용할 수 없습니다.');
+      return;
+    }
+
+    const newState = !isRoadviewOpen;
+    setIsRoadviewOpen(newState);
+
+    if (newState) {
+      // 로드뷰 열기
+      const currentCenter = mapInstance.current.getCenter();
+      panoInstance.current.setPosition(currentCenter);
+      panoInstance.current.setVisible(true);
+    } else {
+      // 로드뷰 닫기
+      panoInstance.current.setVisible(false);
+    }
+  };
+
   // 에러 표시
   if (apiError) {
     return (
@@ -152,58 +231,107 @@ function NaverMap({
       }}>
         <div style={{ textAlign: 'center', maxWidth: '600px' }}>
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
-          <h3 style={{ color: '#dc3545', marginBottom: '15px' }}>네이버 지도 API 인증 실패</h3>
+          <h3 style={{ color: '#dc3545', marginBottom: '15px' }}>네이버 지도 API 오류</h3>
           <div style={{
             backgroundColor: '#fff',
             padding: '20px',
             borderRadius: '5px',
             textAlign: 'left',
             fontSize: '14px',
-            lineHeight: '1.8',
-            marginBottom: '20px'
+            lineHeight: '1.8'
           }}>
             <p style={{ marginBottom: '15px', fontWeight: 'bold', color: '#dc3545' }}>
               {apiError}
             </p>
-            <p style={{ marginBottom: '10px' }}>
-              <strong>Web 서비스 URL 설정이 필요합니다:</strong>
-            </p>
-            <ol style={{ marginLeft: '20px', marginBottom: '15px' }}>
-              <li>네이버 클라우드 플랫폼 콘솔 접속: <a href="https://console.ncloud.com" target="_blank" rel="noopener noreferrer">console.ncloud.com</a></li>
-              <li>Services → AI·Application Service → AI·NAVER API → Application</li>
-              <li><strong>softcat</strong> 애플리케이션 클릭</li>
-              <li><strong>Web 서비스 URL</strong> 섹션에 다음 추가:</li>
-            </ol>
-            <div style={{
-              backgroundColor: '#f1f3f5',
-              padding: '10px',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '13px',
-              marginBottom: '15px'
-            }}>
-              http://localhost:3000<br/>
-              http://localhost:3000/*<br/>
-              http://127.0.0.1:3000<br/>
-              http://127.0.0.1:3000/*
-            </div>
-            <ol start="5" style={{ marginLeft: '20px' }}>
-              <li><strong>저장</strong> 버튼 클릭</li>
-              <li>1-2분 대기 (설정 반영 시간)</li>
-              <li>이 페이지를 <strong>새로고침</strong> (Ctrl + F5)</li>
-            </ol>
           </div>
-          <p style={{ fontSize: '12px', color: '#6c757d' }}>
-            Client ID: <code>k5oupq96xi</code>
-          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ position: 'relative', ...style }}>
-      <div ref={mapRef} style={{ width: '100%', height: '100%' }}></div>
+    <div ref={containerRef} style={{ position: 'relative', ...style }}>
+      {/* 지도 */}
+      <div
+        ref={mapRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: isRoadviewOpen ? 'none' : 'block'
+        }}
+      ></div>
+
+      {/* 로드뷰 (파노라마) */}
+      {showRoadview && (
+        <div
+          ref={panoRef}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: isRoadviewOpen ? 'block' : 'none'
+          }}
+        ></div>
+      )}
+
+      {/* 로드뷰 토글 버튼 */}
+      {showRoadview && (
+        <button
+          onClick={toggleRoadview}
+          disabled={!roadviewAvailable && isRoadviewOpen}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 1000,
+            padding: '10px 15px',
+            backgroundColor: isRoadviewOpen ? '#ef4444' : '#2563eb',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            cursor: roadviewAvailable || !isRoadviewOpen ? 'pointer' : 'not-allowed',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            transition: 'all 0.3s ease',
+            opacity: (!roadviewAvailable && isRoadviewOpen) ? 0.5 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (roadviewAvailable || !isRoadviewOpen) {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          }}
+        >
+          {isRoadviewOpen ? '🗺️ 지도 보기' : '👁️ 로드뷰'}
+        </button>
+      )}
+
+      {/* 로드뷰 사용 불가 안내 */}
+      {!roadviewAvailable && isRoadviewOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          zIndex: 999,
+          textAlign: 'center'
+        }}>
+          <p style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: 'bold' }}>
+            이 위치에서는 로드뷰를 사용할 수 없습니다
+          </p>
+          <p style={{ margin: 0, fontSize: '14px' }}>
+            다른 위치로 이동해주세요
+          </p>
+        </div>
+      )}
     </div>
   );
 }
