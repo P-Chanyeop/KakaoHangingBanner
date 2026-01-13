@@ -192,7 +192,7 @@
                                 <i class="fas fa-search"></i> 주소 검색
                             </button>
                         </div>
-                        <p class="help-text">게시대의 정확한 주소를 입력하고 '주소 검색' 버튼을 클릭하면 지도가 이동합니다</p>
+                        <p class="help-text">게시대의 정확한 주소를 입력하고 '주소 검색' 버튼을 클릭하거나, 아래 지도에서 직접 위치를 클릭하세요</p>
                     </div>
 
                     <div class="form-group full-width">
@@ -257,7 +257,7 @@
             }
         }
 
-        // 주소 검색 (VWorld API)
+        // 주소 검색 (백엔드 프록시 사용)
         function searchAddress() {
             const address = document.getElementById('address').value.trim();
             if (!address) {
@@ -265,17 +265,15 @@
                 return;
             }
 
-            // VWorld Geocoding API 호출
-            const apiKey = ' 6C9C84F6-D3BA-3730-9864-80818F5B8D8F'; // 공용 키
-            const apiUrl = `https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=${encodeURIComponent(address)}&refine=true&simple=false&format=json&type=road&key=${apiKey}`;
+            // 백엔드 프록시 API 호출 (VWorld 2.0 사용)
+            const apiUrl = `/api/stands/geocode?address=${encodeURIComponent(address)}`;
 
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.response.status === 'OK' && data.response.result) {
-                        const result = data.response.result.point;
-                        const lat = parseFloat(result.y);
-                        const lng = parseFloat(result.x);
+                    if (data.success && data.latitude && data.longitude) {
+                        const lat = data.latitude;
+                        const lng = data.longitude;
 
                         // 지도 이동
                         map.setView([lat, lng], 16);

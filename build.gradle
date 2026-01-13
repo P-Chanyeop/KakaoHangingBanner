@@ -29,6 +29,9 @@ dependencies {
 
     // Hibernate 의존성 문제 해결
     implementation 'org.hibernate.common:hibernate-commons-annotations:6.0.6.Final'
+    
+    // JSON Simple 라이브러리 추가
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
     // h2 데이터베이스 (개발용)
     runtimeOnly 'com.h2database:h2'
