@@ -1,16 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import L from 'leaflet';
+import React, { useState, useEffect } from 'react';
 import { standsAPI } from '../services/api';
+import UnifiedMap from '../components/UnifiedMap';
 import './MapSearch.css';
-import 'leaflet/dist/leaflet.css';
-
-// Leaflet 아이콘 이슈 수정
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-});
 
 const REGION_COORDS = {
   '경산시': [35.8250, 128.7414],
@@ -37,75 +28,17 @@ const REGION_COORDS = {
 };
 
 function MapSearch() {
-  const mapRef = useRef(null);
-  const mapInstance = useRef(null);
-  const markersRef = useRef([]);
   const [stands, setStands] = useState([]);
   const [filteredStands, setFilteredStands] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 36.5, lng: 127.5 });
+  const [mapZoom, setMapZoom] = useState(7);
 
   useEffect(() => {
-    initMap();
     loadStands();
-
-    // 지도 크기 강제 재계산
-    const handleResize = () => {
-      if (mapInstance.current) {
-        mapInstance.current.invalidateSize();
-      }
-    };
-
-    // 초기 렌더링 후 지도 크기 재계산
-    const timer = setTimeout(() => {
-      handleResize();
-    }, 100);
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', handleResize);
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
   }, []);
-
-  useEffect(() => {
-    updateMarkers();
-  }, [filteredStands]);
-
-  const initMap = () => {
-    if (mapInstance.current) return;
-    if (!mapRef.current) return;
-
-    // 기존 지도 컨테이너 정리
-    mapRef.current._leaflet_id = undefined;
-
-    mapInstance.current = L.map(mapRef.current, {
-      center: [35.8714, 128.6014],
-      zoom: 10,
-      maxBounds: [
-        [33.0, 124.5],
-        [38.9, 132.0]
-      ],
-      maxBoundsViscosity: 1.0
-    });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(mapInstance.current);
-
-    // 지도 초기화 후 크기 재계산
-    setTimeout(() => {
-      if (mapInstance.current) {
-        mapInstance.current.invalidateSize();
-      }
-    }, 100);
-  };
 
   const loadStands = async () => {
     try {
@@ -114,36 +47,6 @@ function MapSearch() {
       setFilteredStands(data);
     } catch (error) {
       console.error('게시대 데이터 로드 실패:', error);
-    }
-  };
-
-  const updateMarkers = () => {
-    // 기존 마커 제거
-    markersRef.current.forEach(marker => mapInstance.current.removeLayer(marker));
-    markersRef.current = [];
-
-    // 새 마커 추가
-    filteredStands.forEach(stand => {
-      if (stand.latitude && stand.longitude) {
-        const marker = L.marker([stand.latitude, stand.longitude])
-          .addTo(mapInstance.current)
-          .bindPopup(`
-            <div style="min-width: 200px;">
-              <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue);">${stand.name}</h3>
-              <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>주소:</strong> ${stand.address || '없음'}</p>
-              <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>지역:</strong> ${stand.region || '없음'}</p>
-              ${stand.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;">${stand.description}</p>` : ''}
-            </div>
-          `);
-
-        markersRef.current.push(marker);
-      }
-    });
-
-    // 마커가 있으면 지도를 마커들이 모두 보이도록 조정
-    if (markersRef.current.length > 0) {
-      const group = L.featureGroup(markersRef.current);
-      mapInstance.current.fitBounds(group.getBounds().pad(0.1));
     }
   };
 
@@ -174,100 +77,113 @@ function MapSearch() {
 
     if (region && REGION_COORDS[region]) {
       const [lat, lng] = REGION_COORDS[region];
-      mapInstance.current.setView([lat, lng], 12);
+      setMapCenter({ lat, lng });
+      setMapZoom(12);
     }
   };
 
   const focusStand = (stand) => {
     if (stand.latitude && stand.longitude) {
-      mapInstance.current.setView([stand.latitude, stand.longitude], 16);
-
-      const marker = markersRef.current.find(m => {
-        const latLng = m.getLatLng();
-        return latLng.lat === stand.latitude && latLng.lng === stand.longitude;
-      });
-
-      if (marker) {
-        marker.openPopup();
-      }
+      setMapCenter({ lat: stand.latitude, lng: stand.longitude });
+      setMapZoom(16);
     }
   };
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
-    setTimeout(() => {
-      if (mapInstance.current) {
-        mapInstance.current.invalidateSize();
-      }
-    }, 350);
   };
+
+  // 지도에 표시할 마커 데이터 변환
+  const mapMarkers = filteredStands
+    .filter(stand => stand.latitude && stand.longitude)
+    .map(stand => ({
+      lat: stand.latitude,
+      lng: stand.longitude,
+      content: `
+        <div style="min-width: 200px;">
+          <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue);">${stand.name}</h3>
+          <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>주소:</strong> ${stand.address || '없음'}</p>
+          <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>지역:</strong> ${stand.region || '없음'}</p>
+          ${stand.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;">${stand.description}</p>` : ''}
+        </div>
+      `
+    }));
 
   return (
     <div className="map-search-page">
       <div className="map-search-container">
-      {/* Sidebar */}
-      <aside className={`map-search-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="map-search-sidebar-header">
-          <h2 className="map-search-sidebar-title">게시대 검색</h2>
-          <select
-            className="map-search-region-select"
-            value={selectedRegion}
-            onChange={moveToRegion}
-          >
-            <option value="">지역 선택</option>
-            {Object.keys(REGION_COORDS).map(region => (
-              <option key={region} value={region}>{region}</option>
-            ))}
-          </select>
-          <div className="map-search-box">
-            <input
-              type="text"
-              className="map-search-input"
-              placeholder="게시대 이름 또는 주소로 검색..."
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onKeyPress={handleKeyPress}
-            />
-            <button className="map-search-btn" onClick={handleSearch}>검색</button>
+        {/* Sidebar */}
+        <aside className={`map-search-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <div className="map-search-sidebar-header">
+            <h2 className="map-search-sidebar-title">게시대 검색</h2>
+            <select
+              className="map-search-region-select"
+              value={selectedRegion}
+              onChange={moveToRegion}
+            >
+              <option value="">지역 선택</option>
+              {Object.keys(REGION_COORDS).map(region => (
+                <option key={region} value={region}>{region}</option>
+              ))}
+            </select>
+            <div className="map-search-box">
+              <input
+                type="text"
+                className="map-search-input"
+                placeholder="게시대 이름 또는 주소로 검색..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+              <button className="map-search-btn" onClick={handleSearch}>검색</button>
+            </div>
           </div>
+
+          <div className="map-search-sidebar-content">
+            {filteredStands.length === 0 ? (
+              <div className="map-search-no-results">검색 결과가 없습니다.</div>
+            ) : (
+              filteredStands.map(stand => (
+                <div
+                  key={stand.id}
+                  className="map-search-stand-item"
+                  onClick={() => focusStand(stand)}
+                >
+                  <div className="map-search-stand-name">{stand.name}</div>
+                  <div className="map-search-stand-address">{stand.address || '주소 정보 없음'}</div>
+                  <span className="map-search-stand-region">{stand.region || '지역 정보 없음'}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="map-search-stats-bar">
+            <span className="map-search-stats-text">
+              총 <span className="map-search-stats-number">{filteredStands.length}</span>개의 게시대
+            </span>
+          </div>
+        </aside>
+
+        {/* Toggle Button */}
+        <button
+          className="map-search-toggle-btn"
+          onClick={toggleSidebar}
+          title="사이드바 토글"
+        >
+          <i className={`fas fa-chevron-${sidebarCollapsed ? 'right' : 'left'}`}></i>
+        </button>
+
+        {/* Map with Tabs */}
+        <div className="map-search-map">
+          <UnifiedMap
+            center={mapCenter}
+            zoom={mapZoom}
+            markers={mapMarkers}
+            showTabs={true}
+            defaultProvider="leaflet"
+            style={{ width: '100%', height: '100%' }}
+          />
         </div>
-
-        <div className="map-search-sidebar-content">
-          {filteredStands.length === 0 ? (
-            <div className="map-search-no-results">검색 결과가 없습니다.</div>
-          ) : (
-            filteredStands.map(stand => (
-              <div
-                key={stand.id}
-                className="map-search-stand-item"
-                onClick={() => focusStand(stand)}
-              >
-                <div className="map-search-stand-name">{stand.name}</div>
-                <div className="map-search-stand-address">{stand.address || '주소 정보 없음'}</div>
-                <span className="map-search-stand-region">{stand.region || '지역 정보 없음'}</span>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="map-search-stats-bar">
-          <span className="map-search-stats-text">
-            총 <span className="map-search-stats-number">{filteredStands.length}</span>개의 게시대
-          </span>
-        </div>
-      </aside>
-
-      {/* Toggle Button */}
-      <button
-        className="map-search-toggle-btn"
-        onClick={toggleSidebar}
-        title="사이드바 토글"
-      >
-        <i className={`fas fa-chevron-${sidebarCollapsed ? 'right' : 'left'}`}></i>
-      </button>
-
-      {/* Map */}
-      <div ref={mapRef} className="map-search-map"></div>
       </div>
     </div>
   );
