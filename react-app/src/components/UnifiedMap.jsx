@@ -20,7 +20,7 @@ function UnifiedMap({
   onMapClick,
   style = { width: '100%', height: '100%' },
   showTabs = true,
-  defaultProvider = 'leaflet',
+  defaultProvider = 'kakao',
   autoFitBounds = true,
   roadviewMode = 'toggle',
   roadviewTarget = null // 로드뷰 대상 좌표
@@ -162,6 +162,7 @@ function UnifiedMap({
           style={{ width: '100%', height: '100%' }}
           autoFitBounds={autoFitBounds}
           roadviewMode={roadviewMode}
+          roadviewTarget={roadviewTarget}
         />
       )}
     </div>

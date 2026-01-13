@@ -2,9 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import './MapTabs.css';
 
 const MAP_PROVIDERS = [
-  { id: 'leaflet', name: 'OpenStreetMap', icon: 'fa-map' },
   { id: 'kakao', name: '카카오맵', icon: 'fa-comment' },
-  { id: 'naver', name: '네이버지도', icon: 'fa-n' }
+  { id: 'naver', name: '네이버지도', icon: 'fa-n' },
+  { id: 'leaflet', name: 'OpenStreetMap', icon: 'fa-map' }
 ];
 
 function MapTabs({ activeProvider, onProviderChange }) {

@@ -181,7 +181,7 @@ function MapSearch() {
             markers={mapMarkers}
             onMapClick={() => {}} // 빈 함수라도 전달해야 카카오맵 클릭 이벤트가 작동
             showTabs={true}
-            defaultProvider="leaflet"
+            defaultProvider="kakao"
             roadviewMode="selector"
             style={{ width: '100%', height: '100%' }}
           />

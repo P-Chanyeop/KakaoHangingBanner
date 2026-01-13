@@ -8,7 +8,8 @@ function NaverMap({
   style = { width: '100%', height: '100%' },
   showRoadview = true,
   autoFitBounds = true,
-  roadviewMode = 'toggle' // 'toggle' or 'selector'
+  roadviewMode = 'toggle', // 'toggle' or 'selector'
+  roadviewTarget = null // 로드뷰를 보여줄 특정 좌표 (핀 위치)
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -202,6 +203,15 @@ function NaverMap({
       mapInstance.current.fitBounds(bounds, { padding: { top: 50, right: 50, bottom: 50, left: 50 } });
     }
   }, [markers, autoFitBounds]);
+
+  // 네이버맵이 마운트되거나 roadviewTarget이 변경될 때 위치 이동
+  useEffect(() => {
+    if (mapInstance.current && window.naver && roadviewTarget) {
+      const targetLatLng = new window.naver.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng);
+      mapInstance.current.setCenter(targetLatLng);
+      mapInstance.current.setZoom(16); // 핀 위치로 확대
+    }
+  }, [roadviewTarget]);
 
   // 로드뷰 토글
   const toggleRoadview = () => {

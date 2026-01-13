@@ -40,6 +40,13 @@ function KakaoMap({
 
     mapInstance.current = new window.kakao.maps.Map(container, options);
 
+    // 초기 로딩 시 roadviewTarget이 있으면 해당 위치로 이동
+    if (roadviewTarget) {
+      const targetLatLng = new window.kakao.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng);
+      mapInstance.current.setCenter(targetLatLng);
+      mapInstance.current.setLevel(3);
+    }
+
     // 로드뷰 초기화
     if (showRoadview && window.kakao.maps.Roadview) {
       roadviewInstance.current = new window.kakao.maps.Roadview(roadviewRef.current);
@@ -63,9 +70,7 @@ function KakaoMap({
 
     // 지도 클릭 이벤트
     if (onMapClick || (showRoadview && roadviewMode === 'selector')) {
-      console.log('카카오맵 클릭 이벤트 리스너 등록됨');
       window.kakao.maps.event.addListener(mapInstance.current, 'click', function(mouseEvent) {
-        console.log('카카오맵 클릭됨!');
         const latlng = mouseEvent.latLng;
         const coords = {
           lat: latlng.getLat(),
@@ -78,9 +83,7 @@ function KakaoMap({
         }
 
         // 로드뷰 선택 모드일 때 로드뷰 열기
-        console.log('로드뷰 체크:', { showRoadview, roadviewMode, isSelectingRoadview: isSelectingRoadviewRef.current });
         if (showRoadview && roadviewMode === 'selector' && isSelectingRoadviewRef.current) {
-          console.log('카카오맵 로드뷰 선택 모드에서 클릭:', coords);
           openRoadviewAt(coords);
         }
       });
@@ -111,12 +114,12 @@ function KakaoMap({
     }
   }, [center, zoom]);
 
-  // roadviewTarget이 변경되면 해당 위치로 이동
+  // 카카오맵이 마운트되거나 roadviewTarget이 변경될 때 위치 이동
   useEffect(() => {
     if (mapInstance.current && window.kakao && roadviewTarget) {
       const targetLatLng = new window.kakao.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng);
       mapInstance.current.setCenter(targetLatLng);
-      mapInstance.current.setLevel(3); // 핀 찍힌 곳은 확대해서 보여주기
+      mapInstance.current.setLevel(3);
     }
   }, [roadviewTarget]);
 
@@ -175,11 +178,7 @@ function KakaoMap({
 
   // 로드뷰 토글
   const toggleRoadview = () => {
-    console.log('카카오맵 로드뷰 토글 버튼 클릭됨');
-    console.log('현재 상태:', { isSelectingRoadview, roadviewMode, roadviewInstance: !!roadviewInstance.current });
-    
     if (!roadviewInstance.current) {
-      console.log('로드뷰 인스턴스 없음');
       alert('로드뷰를 사용할 수 없습니다.');
       return;
     }
@@ -193,7 +192,6 @@ function KakaoMap({
       } else {
         // 로드뷰가 닫혀있으면 선택 모드 토글
         const newSelectingState = !isSelectingRoadview;
-        console.log('선택 모드 변경:', isSelectingRoadview, '->', newSelectingState);
         setIsSelectingRoadview(newSelectingState);
       }
     } else {
