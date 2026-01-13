@@ -149,7 +149,7 @@ function UnifiedMap({
           style={{ width: '100%', height: '100%' }}
           showRoadview={true}
           roadviewMode={roadviewMode}
-          roadviewTarget={roadviewTarget}
+          roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
         />
       )}
 
@@ -162,7 +162,7 @@ function UnifiedMap({
           style={{ width: '100%', height: '100%' }}
           autoFitBounds={autoFitBounds}
           roadviewMode={roadviewMode}
-          roadviewTarget={roadviewTarget}
+          roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
         />
       )}
     </div>

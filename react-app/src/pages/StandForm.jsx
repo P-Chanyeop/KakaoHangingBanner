@@ -38,8 +38,9 @@ function StandForm() {
     latitude: null,
     longitude: null,
     description: '',
-    imageUrl: ''
+    imageFile: null // URL 대신 파일로 변경
   });
+  const [imagePreview, setImagePreview] = useState(null); // 이미지 미리보기
 
   const [mapCenter, setMapCenter] = useState({ lat: 35.8714, lng: 128.6014 });
   const [mapZoom, setMapZoom] = useState(14);
@@ -54,12 +55,49 @@ function StandForm() {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // 이미지 파일인지 확인
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
+      
+      // 파일 크기 제한 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다.');
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        imageFile: file
+      }));
+
+      // 미리보기 생성
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleRegionChange = (e) => {
     const region = e.target.value;
     setFormData(prev => ({
       ...prev,
-      region: region
+      region: region,
+      latitude: null,  // 지역 변경 시 핀 제거
+      longitude: null,
+      imageFile: null  // 이미지도 초기화
     }));
+
+    // 마커와 좌표 표시 초기화
+    setSelectedMarker(null);
+    setCoordsDisplay('지도를 클릭하여 위치를 선택하세요');
+    setImagePreview(null);
 
     if (region && REGION_COORDS[region]) {
       const [lat, lng] = REGION_COORDS[region];
@@ -140,13 +178,27 @@ function StandForm() {
       latitude: formData.latitude,
       longitude: formData.longitude,
       description: formData.description || null,
-      imageUrl: formData.imageUrl || null
+      imageFile: formData.imageFile || null
     };
 
     try {
       await standsAPI.create(submitData);
       alert('게시대가 저장되었습니다.');
-      navigate('/map');
+      
+      // 폼 초기화 (페이지는 그대로 유지)
+      setFormData({
+        name: '',
+        region: '',
+        address: '',
+        latitude: null,
+        longitude: null,
+        description: '',
+        imageFile: null
+      });
+      setSelectedMarker(null);
+      setCoordsDisplay('지도를 클릭하여 위치를 선택하세요');
+      setImagePreview(null);
+      
     } catch (error) {
       console.error('저장 오류:', error);
       alert(error.message || '저장에 실패했습니다.');
@@ -261,17 +313,31 @@ function StandForm() {
             </div>
 
             <div className="form-group full-width">
-              <label htmlFor="imageUrl" className="form-label">이미지 URL</label>
+              <label htmlFor="imageFile" className="form-label">게시대 이미지</label>
               <input
-                type="url"
+                type="file"
                 className="form-control"
-                id="imageUrl"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleInputChange}
-                placeholder="https://example.com/image.jpg"
+                id="imageFile"
+                name="imageFile"
+                accept="image/*"
+                onChange={handleImageChange}
               />
-              <p className="help-text">게시대 사진의 URL을 입력하세요 (선택사항)</p>
+              <p className="help-text">게시대 사진을 업로드하세요 (최대 5MB, JPG/PNG/GIF 등)</p>
+              {imagePreview && (
+                <div style={{ marginTop: '10px' }}>
+                  <img 
+                    src={imagePreview} 
+                    alt="미리보기" 
+                    style={{ 
+                      maxWidth: '200px', 
+                      maxHeight: '150px', 
+                      objectFit: 'cover', 
+                      borderRadius: '4px',
+                      border: '1px solid #ddd'
+                    }} 
+                  />
+                </div>
+              )}
             </div>
           </div>
 

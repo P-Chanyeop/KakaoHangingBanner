@@ -204,14 +204,14 @@ function NaverMap({
     }
   }, [markers, autoFitBounds]);
 
-  // 네이버맵이 마운트되거나 roadviewTarget이 변경될 때 위치 이동
+  // 지도 전환 시에만 roadviewTarget 위치로 이동 (초기 마운트 시)
   useEffect(() => {
     if (mapInstance.current && window.naver && roadviewTarget) {
       const targetLatLng = new window.naver.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng);
       mapInstance.current.setCenter(targetLatLng);
-      mapInstance.current.setZoom(16); // 핀 위치로 확대
+      mapInstance.current.setZoom(16);
     }
-  }, [roadviewTarget]);
+  }, []); // 빈 의존성 배열로 초기 마운트 시에만 실행
 
   // 로드뷰 토글
   const toggleRoadview = () => {

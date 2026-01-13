@@ -33,9 +33,19 @@ function KakaoMap({
     }
 
     const container = mapRef.current;
+    // 초기 위치 설정: 게시대 등록 페이지에서만 roadviewTarget 사용
+    const isStandFormPage = roadviewMode === 'toggle'; // 게시대 등록 페이지는 toggle 모드
+    const initialCenter = (isStandFormPage && roadviewTarget) 
+      ? new window.kakao.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng)
+      : new window.kakao.maps.LatLng(center.lat, center.lng);
+    
+    const initialLevel = (isStandFormPage && roadviewTarget) 
+      ? 3 // 핀이 있으면 확대
+      : (zoom === 7 ? 14 : zoom === 13 ? 6 : zoom === 16 ? 3 : zoom === 12 ? 6 : Math.max(1, 15 - zoom));
+
     const options = {
-      center: new window.kakao.maps.LatLng(center.lat, center.lng),
-      level: 19 // 한국 전체가 보이도록 최대 레벨 설정
+      center: initialCenter,
+      level: initialLevel
     };
 
     mapInstance.current = new window.kakao.maps.Map(container, options);
@@ -114,14 +124,14 @@ function KakaoMap({
     }
   }, [center, zoom]);
 
-  // 카카오맵이 마운트되거나 roadviewTarget이 변경될 때 위치 이동
+  // 지도 전환 시에만 roadviewTarget 위치로 이동 (초기 마운트 시)
   useEffect(() => {
     if (mapInstance.current && window.kakao && roadviewTarget) {
       const targetLatLng = new window.kakao.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng);
       mapInstance.current.setCenter(targetLatLng);
       mapInstance.current.setLevel(3);
     }
-  }, [roadviewTarget]);
+  }, []); // 빈 의존성 배열로 초기 마운트 시에만 실행
 
   // 마커 업데이트
   useEffect(() => {
@@ -142,11 +152,17 @@ function KakaoMap({
       // 인포윈도우 추가
       if (markerData.content) {
         const infowindow = new window.kakao.maps.InfoWindow({
-          content: `<div style="padding:10px;">${markerData.content}</div>`
+          content: `<div style="width: 280px; max-width: 280px; overflow: hidden; padding: 15px;">${markerData.content}</div>`
         });
 
         window.kakao.maps.event.addListener(marker, 'click', function() {
-          infowindow.open(mapInstance.current, marker);
+          if (infowindow.getMap()) {
+            // 이미 열려있으면 닫기
+            infowindow.close();
+          } else {
+            // 닫혀있으면 열기
+            infowindow.open(mapInstance.current, marker);
+          }
         });
       }
 

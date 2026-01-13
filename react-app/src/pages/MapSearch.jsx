@@ -96,18 +96,22 @@ function MapSearch() {
   // 지도에 표시할 마커 데이터 변환
   const mapMarkers = filteredStands
     .filter(stand => stand.latitude && stand.longitude)
-    .map(stand => ({
-      lat: stand.latitude,
-      lng: stand.longitude,
-      content: `
-        <div style="min-width: 200px;">
-          <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue);">${stand.name}</h3>
-          <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>주소:</strong> ${stand.address || '없음'}</p>
-          <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>지역:</strong> ${stand.region || '없음'}</p>
-          ${stand.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;">${stand.description}</p>` : ''}
-        </div>
-      `
-    }));
+    .map(stand => {
+      console.log('게시대 데이터:', stand); // 디버깅용
+      return {
+        lat: stand.latitude,
+        lng: stand.longitude,
+        content: `
+          <div style="min-width: 200px; max-width: 300px; padding: 10px; word-wrap: break-word;">
+            ${stand.imageUrl ? `<img src="${stand.imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none'">` : ''}
+            <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue); font-size: 1rem; line-height: 1.3; word-break: break-word;">${stand.name}</h3>
+            <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4; word-break: break-word;"><strong>주소:</strong> ${stand.address || '없음'}</p>
+            <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4;"><strong>지역:</strong> ${stand.region || '없음'}</p>
+            ${stand.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666; line-height: 1.4; word-break: break-word;">${stand.description}</p>` : ''}
+          </div>
+        `
+      };
+    });
 
   return (
     <div className="map-search-page">
