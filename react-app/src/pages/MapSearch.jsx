@@ -203,14 +203,14 @@ function MapSearch() {
   };
 
   return (
-    <div className="map-page">
-      <div className="map-container">
+    <div className="map-search-page">
+      <div className="map-search-container">
       {/* Sidebar */}
-      <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="sidebar-header">
-          <h2 className="sidebar-title">게시대 검색</h2>
+      <aside className={`map-search-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="map-search-sidebar-header">
+          <h2 className="map-search-sidebar-title">게시대 검색</h2>
           <select
-            className="region-select"
+            className="map-search-region-select"
             value={selectedRegion}
             onChange={moveToRegion}
           >
@@ -219,47 +219,47 @@ function MapSearch() {
               <option key={region} value={region}>{region}</option>
             ))}
           </select>
-          <div className="search-box">
+          <div className="map-search-box">
             <input
               type="text"
-              className="search-input"
+              className="map-search-input"
               placeholder="게시대 이름 또는 주소로 검색..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               onKeyPress={handleKeyPress}
             />
-            <button className="search-btn" onClick={handleSearch}>검색</button>
+            <button className="map-search-btn" onClick={handleSearch}>검색</button>
           </div>
         </div>
 
-        <div className="sidebar-content">
+        <div className="map-search-sidebar-content">
           {filteredStands.length === 0 ? (
-            <div className="no-results">검색 결과가 없습니다.</div>
+            <div className="map-search-no-results">검색 결과가 없습니다.</div>
           ) : (
             filteredStands.map(stand => (
               <div
                 key={stand.id}
-                className="stand-item"
+                className="map-search-stand-item"
                 onClick={() => focusStand(stand)}
               >
-                <div className="stand-name">{stand.name}</div>
-                <div className="stand-address">{stand.address || '주소 정보 없음'}</div>
-                <span className="stand-region">{stand.region || '지역 정보 없음'}</span>
+                <div className="map-search-stand-name">{stand.name}</div>
+                <div className="map-search-stand-address">{stand.address || '주소 정보 없음'}</div>
+                <span className="map-search-stand-region">{stand.region || '지역 정보 없음'}</span>
               </div>
             ))
           )}
         </div>
 
-        <div className="stats-bar">
-          <span className="stats-text">
-            총 <span className="stats-number">{filteredStands.length}</span>개의 게시대
+        <div className="map-search-stats-bar">
+          <span className="map-search-stats-text">
+            총 <span className="map-search-stats-number">{filteredStands.length}</span>개의 게시대
           </span>
         </div>
       </aside>
 
       {/* Toggle Button */}
       <button
-        className="toggle-btn"
+        className="map-search-toggle-btn"
         onClick={toggleSidebar}
         title="사이드바 토글"
       >
@@ -267,7 +267,7 @@ function MapSearch() {
       </button>
 
       {/* Map */}
-      <div ref={mapRef} id="map"></div>
+      <div ref={mapRef} className="map-search-map"></div>
       </div>
     </div>
   );
