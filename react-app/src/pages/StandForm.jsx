@@ -281,7 +281,7 @@ function StandForm() {
               <label className="form-label">
                 위치 선택 <span className="required">*</span>
               </label>
-              <div ref={mapRef} className="map-container"></div>
+              <div ref={mapRef} className="stand-form-map"></div>
               <div className="coordinates-display">
                 선택된 좌표: <span className="coordinates-value">{coordsDisplay}</span>
               </div>
