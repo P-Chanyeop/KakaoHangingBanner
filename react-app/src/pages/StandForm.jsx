@@ -1,17 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import L from 'leaflet';
 import { standsAPI } from '../services/api';
+import UnifiedMap from '../components/UnifiedMap';
 import './StandForm.css';
-import 'leaflet/dist/leaflet.css';
-
-// Leaflet 아이콘 이슈 수정
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-});
 
 const REGION_COORDS = {
   '경산시': [35.8250, 128.7414],
@@ -39,9 +30,6 @@ const REGION_COORDS = {
 
 function StandForm() {
   const navigate = useNavigate();
-  const mapRef = useRef(null);
-  const mapInstance = useRef(null);
-  const markerRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -53,64 +41,10 @@ function StandForm() {
     imageUrl: ''
   });
 
+  const [mapCenter, setMapCenter] = useState({ lat: 35.8714, lng: 128.6014 });
+  const [mapZoom, setMapZoom] = useState(14);
+  const [selectedMarker, setSelectedMarker] = useState(null);
   const [coordsDisplay, setCoordsDisplay] = useState('지도를 클릭하여 위치를 선택하세요');
-
-  useEffect(() => {
-    initMap();
-
-    return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
-  }, []);
-
-  const initMap = () => {
-    if (mapInstance.current) return;
-    if (!mapRef.current) return;
-
-    // 기존 지도 컨테이너 정리
-    mapRef.current._leaflet_id = undefined;
-
-    const defaultCenter = [35.8714, 128.6014]; // 대구 중심 좌표
-
-    mapInstance.current = L.map(mapRef.current, {
-      center: defaultCenter,
-      zoom: 14,
-      maxBounds: [
-        [33.0, 124.5],
-        [38.9, 132.0]
-      ],
-      maxBoundsViscosity: 1.0
-    });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(mapInstance.current);
-
-    // 지도 클릭 이벤트
-    mapInstance.current.on('click', (e) => {
-      const { lat, lng } = e.latlng;
-
-      // 기존 마커 제거
-      if (markerRef.current) {
-        mapInstance.current.removeLayer(markerRef.current);
-      }
-
-      // 새 마커 추가
-      markerRef.current = L.marker([lat, lng]).addTo(mapInstance.current);
-
-      // 폼 필드 업데이트
-      setFormData(prev => ({
-        ...prev,
-        latitude: lat,
-        longitude: lng
-      }));
-
-      setCoordsDisplay(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-    });
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -129,8 +63,27 @@ function StandForm() {
 
     if (region && REGION_COORDS[region]) {
       const [lat, lng] = REGION_COORDS[region];
-      mapInstance.current.setView([lat, lng], 13);
+      setMapCenter({ lat, lng });
+      setMapZoom(13);
     }
+  };
+
+  const handleMapClick = (coords) => {
+    const { lat, lng } = coords;
+
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng
+    }));
+
+    setSelectedMarker({
+      lat,
+      lng,
+      content: '<div style="padding: 10px;">선택된 위치</div>'
+    });
+
+    setCoordsDisplay(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
   };
 
   const searchAddress = async () => {
@@ -147,23 +100,20 @@ function StandForm() {
         const lat = parseFloat(data.latitude);
         const lng = parseFloat(data.longitude);
 
-        // 지도 이동
-        mapInstance.current.setView([lat, lng], 16);
+        setMapCenter({ lat, lng });
+        setMapZoom(16);
 
-        // 기존 마커 제거
-        if (markerRef.current) {
-          mapInstance.current.removeLayer(markerRef.current);
-        }
-
-        // 새 마커 추가
-        markerRef.current = L.marker([lat, lng]).addTo(mapInstance.current);
-
-        // 폼 필드 업데이트
         setFormData(prev => ({
           ...prev,
           latitude: lat,
           longitude: lng
         }));
+
+        setSelectedMarker({
+          lat,
+          lng,
+          content: `<div style="padding: 10px;">${address}</div>`
+        });
 
         setCoordsDisplay(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       } else {
@@ -178,7 +128,6 @@ function StandForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 위치 검증
     if (!formData.latitude || !formData.longitude) {
       alert('지도에서 위치를 선택해주세요.');
       return;
@@ -195,7 +144,7 @@ function StandForm() {
     };
 
     try {
-      const result = await standsAPI.create(submitData);
+      await standsAPI.create(submitData);
       alert('게시대가 저장되었습니다.');
       navigate('/map');
     } catch (error) {
@@ -281,7 +230,17 @@ function StandForm() {
               <label className="form-label">
                 위치 선택 <span className="required">*</span>
               </label>
-              <div ref={mapRef} className="stand-form-map"></div>
+              <div className="stand-form-map">
+                <UnifiedMap
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  markers={selectedMarker ? [selectedMarker] : []}
+                  onMapClick={handleMapClick}
+                  showTabs={true}
+                  defaultProvider="leaflet"
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
               <div className="coordinates-display">
                 선택된 좌표: <span className="coordinates-value">{coordsDisplay}</span>
               </div>
