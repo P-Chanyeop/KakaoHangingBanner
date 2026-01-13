@@ -20,7 +20,9 @@ function UnifiedMap({
   onMapClick,
   style = { width: '100%', height: '100%' },
   showTabs = true,
-  defaultProvider = 'leaflet'
+  defaultProvider = 'leaflet',
+  autoFitBounds = true,
+  roadviewMode = 'toggle'
 }) {
   const [mapProvider, setMapProvider] = useState(defaultProvider);
   const leafletMapRef = useRef(null);
@@ -97,13 +99,13 @@ function UnifiedMap({
         leafletMarkersRef.current.push(marker);
       });
 
-      // 마커가 있으면 범위에 맞게 조정
-      if (leafletMarkersRef.current.length > 0) {
+      // 마커가 있으면 범위에 맞게 조정 (autoFitBounds가 true일 때만)
+      if (autoFitBounds && leafletMarkersRef.current.length > 0) {
         const group = L.featureGroup(leafletMarkersRef.current);
         leafletInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
       }
     }
-  }, [markers, mapProvider]);
+  }, [markers, mapProvider, autoFitBounds]);
 
   // 지도 제공자 변경 시 크기 재계산
   useEffect(() => {
@@ -154,6 +156,8 @@ function UnifiedMap({
           markers={markers}
           onMapClick={onMapClick}
           style={{ width: '100%', height: '100%' }}
+          autoFitBounds={autoFitBounds}
+          roadviewMode={roadviewMode}
         />
       )}
     </div>
