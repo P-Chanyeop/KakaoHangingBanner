@@ -6,17 +6,21 @@ function NaverMap({
   markers = [],
   onMapClick,
   style = { width: '100%', height: '100%' },
-  showRoadview = true
+  showRoadview = true,
+  autoFitBounds = true,
+  roadviewMode = 'toggle' // 'toggle' or 'selector'
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const panoRef = useRef(null);
   const mapInstance = useRef(null);
   const panoInstance = useRef(null);
+  const panoLayerRef = useRef(null);
   const markersRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [roadviewAvailable, setRoadviewAvailable] = useState(true);
+  const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -58,14 +62,17 @@ function NaverMap({
       mapInstance.current = new window.naver.maps.Map(mapRef.current, mapOptions);
 
       // 지도 클릭 이벤트
-      if (onMapClick) {
-        window.naver.maps.Event.addListener(mapInstance.current, 'click', function(e) {
-          onMapClick({
-            lat: e.coord.lat(),
-            lng: e.coord.lng()
-          });
-        });
-      }
+      window.naver.maps.Event.addListener(mapInstance.current, 'click', function(e) {
+        const clickCoord = {
+          lat: e.coord.lat(),
+          lng: e.coord.lng()
+        };
+
+        // onMapClick 콜백 호출 (있는 경우)
+        if (onMapClick) {
+          onMapClick(clickCoord);
+        }
+      });
 
       // 파노라마 초기화 (showRoadview가 true일 때)
       if (showRoadview && window.naver.maps.Panorama) {
@@ -109,6 +116,11 @@ function NaverMap({
             const pov = panoInstance.current.getPov();
             console.log('파노라마 시야:', pov);
           });
+
+          // PanoramaLayer 초기화 (selector 모드용)
+          if (roadviewMode === 'selector' && window.naver.maps.PanoramaLayer) {
+            panoLayerRef.current = new window.naver.maps.PanoramaLayer();
+          }
 
         } catch (error) {
           console.error('파노라마 초기화 오류:', error);
@@ -185,15 +197,15 @@ function NaverMap({
       markersRef.current.push(marker);
     });
 
-    // 마커가 있으면 범위에 맞게 조정
-    if (markers.length > 0 && window.naver) {
+    // 마커가 있으면 범위에 맞게 조정 (autoFitBounds가 true일 때만)
+    if (autoFitBounds && markers.length > 0 && window.naver) {
       const bounds = new window.naver.maps.LatLngBounds();
       markers.forEach(markerData => {
         bounds.extend(new window.naver.maps.LatLng(markerData.lat, markerData.lng));
       });
       mapInstance.current.fitBounds(bounds, { padding: { top: 50, right: 50, bottom: 50, left: 50 } });
     }
-  }, [markers]);
+  }, [markers, autoFitBounds]);
 
   // 로드뷰 토글
   const toggleRoadview = () => {
@@ -202,19 +214,65 @@ function NaverMap({
       return;
     }
 
-    const newState = !isRoadviewOpen;
-    setIsRoadviewOpen(newState);
+    if (roadviewMode === 'selector') {
+      // Selector 모드: 길 선택 모드 토글
+      const newSelectingState = !isSelectingRoadview;
+      setIsSelectingRoadview(newSelectingState);
 
-    if (newState) {
-      // 로드뷰 열기
-      const currentCenter = mapInstance.current.getCenter();
-      panoInstance.current.setPosition(currentCenter);
-      panoInstance.current.setVisible(true);
+      if (newSelectingState) {
+        // 로드뷰 선택 모드 활성화 - PanoramaLayer 표시
+        if (panoLayerRef.current) {
+          panoLayerRef.current.setMap(mapInstance.current);
+        }
+      } else {
+        // 로드뷰 선택 모드 비활성화
+        if (panoLayerRef.current) {
+          panoLayerRef.current.setMap(null);
+        }
+        // 로드뷰가 열려있으면 닫기
+        if (isRoadviewOpen) {
+          panoInstance.current.setVisible(false);
+          setIsRoadviewOpen(false);
+        }
+      }
     } else {
-      // 로드뷰 닫기
-      panoInstance.current.setVisible(false);
+      // Toggle 모드: 즉시 로드뷰 열기/닫기
+      const newState = !isRoadviewOpen;
+      setIsRoadviewOpen(newState);
+
+      if (newState) {
+        // 로드뷰 열기
+        const currentCenter = mapInstance.current.getCenter();
+        panoInstance.current.setPosition(currentCenter);
+        panoInstance.current.setVisible(true);
+      } else {
+        // 로드뷰 닫기
+        panoInstance.current.setVisible(false);
+      }
     }
   };
+
+  // Selector 모드에서 지도 클릭 시 로드뷰 열기
+  useEffect(() => {
+    if (!mapInstance.current || roadviewMode !== 'selector') return;
+
+    const clickListener = window.naver.maps.Event.addListener(mapInstance.current, 'click', function(e) {
+      if (isSelectingRoadview && panoInstance.current) {
+        const clickedPosition = e.coord;
+
+        // 로드뷰 열기
+        panoInstance.current.setPosition(clickedPosition);
+        panoInstance.current.setVisible(true);
+        setIsRoadviewOpen(true);
+      }
+    });
+
+    return () => {
+      if (clickListener) {
+        window.naver.maps.Event.removeListener(clickListener);
+      }
+    };
+  }, [isSelectingRoadview, roadviewMode]);
 
   // 에러 표시
   if (apiError) {
@@ -284,7 +342,10 @@ function NaverMap({
             right: '10px',
             zIndex: 1000,
             padding: '10px 15px',
-            backgroundColor: isRoadviewOpen ? '#ef4444' : '#2563eb',
+            backgroundColor:
+              roadviewMode === 'selector'
+                ? (isSelectingRoadview ? '#10b981' : '#2563eb')
+                : (isRoadviewOpen ? '#ef4444' : '#2563eb'),
             color: 'white',
             border: 'none',
             borderRadius: '5px',
@@ -306,8 +367,35 @@ function NaverMap({
             e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
           }}
         >
-          {isRoadviewOpen ? '🗺️ 지도 보기' : '👁️ 로드뷰'}
+          {roadviewMode === 'selector'
+            ? (isSelectingRoadview
+                ? (isRoadviewOpen ? '🗺️ 지도 보기' : '🚫 선택 취소')
+                : '👁️ 로드뷰 선택')
+            : (isRoadviewOpen ? '🗺️ 지도 보기' : '👁️ 로드뷰')
+          }
         </button>
+      )}
+
+      {/* 로드뷰 선택 모드 안내 */}
+      {roadviewMode === 'selector' && isSelectingRoadview && !isRoadviewOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '60px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(16, 185, 129, 0.95)',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          zIndex: 999,
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+          whiteSpace: 'nowrap'
+        }}>
+          📍 지도에서 원하는 위치를 클릭하여 로드뷰를 확인하세요
+        </div>
       )}
 
       {/* 로드뷰 사용 불가 안내 */}

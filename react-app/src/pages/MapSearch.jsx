@@ -181,6 +181,7 @@ function MapSearch() {
             markers={mapMarkers}
             showTabs={true}
             defaultProvider="leaflet"
+            roadviewMode="selector"
             style={{ width: '100%', height: '100%' }}
           />
         </div>
