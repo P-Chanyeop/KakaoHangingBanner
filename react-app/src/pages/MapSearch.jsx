@@ -78,7 +78,7 @@ function MapSearch() {
     if (region && REGION_COORDS[region]) {
       const [lat, lng] = REGION_COORDS[region];
       setMapCenter({ lat, lng });
-      setMapZoom(12);
+      setMapZoom(13);
     }
   };
 
@@ -179,6 +179,7 @@ function MapSearch() {
             center={mapCenter}
             zoom={mapZoom}
             markers={mapMarkers}
+            onMapClick={() => {}} // 빈 함수라도 전달해야 카카오맵 클릭 이벤트가 작동
             showTabs={true}
             defaultProvider="leaflet"
             roadviewMode="selector"

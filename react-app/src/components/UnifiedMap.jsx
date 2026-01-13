@@ -22,7 +22,8 @@ function UnifiedMap({
   showTabs = true,
   defaultProvider = 'leaflet',
   autoFitBounds = true,
-  roadviewMode = 'toggle'
+  roadviewMode = 'toggle',
+  roadviewTarget = null // 로드뷰 대상 좌표
 }) {
   const [mapProvider, setMapProvider] = useState(defaultProvider);
   const leafletMapRef = useRef(null);
@@ -146,6 +147,9 @@ function UnifiedMap({
           markers={markers}
           onMapClick={onMapClick}
           style={{ width: '100%', height: '100%' }}
+          showRoadview={true}
+          roadviewMode={roadviewMode}
+          roadviewTarget={roadviewTarget}
         />
       )}
 

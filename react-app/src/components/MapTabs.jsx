@@ -27,6 +27,7 @@ function MapTabs({ activeProvider, onProviderChange }) {
       {MAP_PROVIDERS.map(provider => (
         <button
           key={provider.id}
+          type="button"
           ref={el => tabsRef.current[provider.id] = el}
           className={`map-tab-button ${activeProvider === provider.id ? 'active' : ''}`}
           onClick={() => onProviderChange(provider.id)}

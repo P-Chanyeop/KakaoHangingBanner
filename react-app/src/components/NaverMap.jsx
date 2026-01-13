@@ -91,15 +91,13 @@ function NaverMap({
 
           // 파노라마 초기화 완료 이벤트
           window.naver.maps.Event.addListener(panoInstance.current, 'init', function() {
-            console.log('파노라마 초기화 완료');
+            // 파노라마 초기화 완료 (로그 제거)
           });
 
           // 파노라마 상태 이벤트
           window.naver.maps.Event.addListener(panoInstance.current, 'pano_status', function(status) {
-            console.log('파노라마 상태:', status);
             if (status === 'ERROR') {
               setRoadviewAvailable(false);
-              console.warn('이 위치에서는 로드뷰를 사용할 수 없습니다.');
             } else {
               setRoadviewAvailable(true);
             }
@@ -107,14 +105,12 @@ function NaverMap({
 
           // 파노라마 변경 이벤트
           window.naver.maps.Event.addListener(panoInstance.current, 'pano_changed', function() {
-            const location = panoInstance.current.getLocation();
-            console.log('파노라마 위치:', location);
+            // 파노라마 위치 변경됨 (로그 제거)
           });
 
           // 파노라마 시야 변경 이벤트
           window.naver.maps.Event.addListener(panoInstance.current, 'pov_changed', function() {
-            const pov = panoInstance.current.getPov();
-            console.log('파노라마 시야:', pov);
+            // 파노라마 시야 변경됨 (로그 제거)
           });
 
           // PanoramaLayer 초기화 (selector 모드용)
@@ -334,6 +330,7 @@ function NaverMap({
       {/* 로드뷰 토글 버튼 */}
       {showRoadview && (
         <button
+          type="button"
           onClick={toggleRoadview}
           disabled={!roadviewAvailable && isRoadviewOpen}
           style={{

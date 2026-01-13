@@ -239,6 +239,7 @@ function StandForm() {
                   showTabs={true}
                   defaultProvider="leaflet"
                   autoFitBounds={false}
+                  roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
                   style={{ width: '100%', height: '100%' }}
                 />
               </div>
