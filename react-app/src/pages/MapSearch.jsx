@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { standsAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import UnifiedMap from '../components/UnifiedMap';
 import './MapSearch.css';
 
@@ -30,6 +32,8 @@ const REGION_COORDS = {
 };
 
 function MapSearch() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [stands, setStands] = useState([]);
   const [filteredStands, setFilteredStands] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -37,6 +41,16 @@ function MapSearch() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 36.5, lng: 127.5 });
   const [mapZoom, setMapZoom] = useState(7);
+  const [selectedStand, setSelectedStand] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    region: '',
+    address: '',
+    description: '',
+    imageFile: null
+  });
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     loadStands();
@@ -88,6 +102,86 @@ function MapSearch() {
     if (stand.latitude && stand.longitude) {
       setMapCenter({ lat: stand.latitude, lng: stand.longitude });
       setMapZoom(16);
+      setSelectedStand(stand);
+    }
+  };
+
+  const handleEdit = (stand) => {
+    setSelectedStand(stand);
+    setEditFormData({
+      name: stand.name,
+      region: stand.region || '',
+      address: stand.address || '',
+      description: stand.description || '',
+      imageFile: null
+    });
+    setImagePreview(stand.imageUrl || null);
+    setShowEditModal(true);
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다.');
+        return;
+      }
+      setEditFormData(prev => ({ ...prev, imageFile: file }));
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const formData = new FormData();
+      formData.append('name', editFormData.name);
+      formData.append('region', editFormData.region);
+      formData.append('address', editFormData.address);
+      formData.append('latitude', selectedStand.latitude);
+      formData.append('longitude', selectedStand.longitude);
+      formData.append('description', editFormData.description);
+      
+      if (editFormData.imageFile) {
+        formData.append('image', editFormData.imageFile);
+      }
+      
+      await standsAPI.updateWithFile(selectedStand.id, formData);
+      
+      alert('게시대가 수정되었습니다.');
+      setShowEditModal(false);
+      loadStands();
+    } catch (error) {
+      console.error('수정 실패:', error);
+      alert('게시대 수정에 실패했습니다.');
+    }
+  };
+
+  const handleDelete = async (stand) => {
+    if (!window.confirm(`"${stand.name}" 게시대를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      await standsAPI.delete(stand.id);
+      alert('게시대가 삭제되었습니다.');
+      setSelectedStand(null);
+      loadStands();
+    } catch (error) {
+      console.error('삭제 실패:', error);
+      alert('게시대 삭제에 실패했습니다.');
     }
   };
 
@@ -99,9 +193,6 @@ function MapSearch() {
   const mapMarkers = filteredStands
     .filter(stand => stand.latitude && stand.longitude)
     .map(stand => {
-      console.log('게시대 데이터:', stand); // 디버깅용
-      
-      // 이미지 URL 그대로 사용 (상대 경로)
       const imageUrl = stand.imageUrl;
       
       return {
@@ -109,7 +200,7 @@ function MapSearch() {
         lng: stand.longitude,
         content: `
           <div style="min-width: 200px; max-width: 300px; padding: 10px; word-wrap: break-word;">
-            ${imageUrl ? `<img src="${imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none'; console.log('이미지 로드 실패:', this.src);">` : ''}
+            ${imageUrl ? `<img src="${imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none';">` : ''}
             <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue); font-size: 1rem; line-height: 1.3; word-break: break-word;">${stand.name}</h3>
             <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4; word-break: break-word;"><strong>주소:</strong> ${stand.address || '없음'}</p>
             <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4;"><strong>지역:</strong> ${stand.region || '없음'}</p>
@@ -156,12 +247,45 @@ function MapSearch() {
               filteredStands.map(stand => (
                 <div
                   key={stand.id}
-                  className="map-search-stand-item"
-                  onClick={() => focusStand(stand)}
+                  className={`map-search-stand-item ${selectedStand?.id === stand.id ? 'active' : ''}`}
                 >
-                  <div className="map-search-stand-name">{stand.name}</div>
-                  <div className="map-search-stand-address">{stand.address || '주소 정보 없음'}</div>
-                  <span className="map-search-stand-region">{stand.region || '지역 정보 없음'}</span>
+                  <div onClick={() => focusStand(stand)} style={{ flex: 1, cursor: 'pointer' }}>
+                    <div className="map-search-stand-name">{stand.name}</div>
+                    <div className="map-search-stand-address">{stand.address || '주소 정보 없음'}</div>
+                    <span className="map-search-stand-region">{stand.region || '지역 정보 없음'}</span>
+                  </div>
+                  {isAuthenticated && (
+                    <div style={{ display: 'flex', gap: '0.5rem', marginLeft: '0.5rem' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(stand); }}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          fontSize: '0.8rem',
+                          backgroundColor: '#2563eb',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(stand); }}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          fontSize: '0.8rem',
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -189,7 +313,7 @@ function MapSearch() {
             center={mapCenter}
             zoom={mapZoom}
             markers={mapMarkers}
-            onMapClick={() => {}} // 빈 함수라도 전달해야 카카오맵 클릭 이벤트가 작동
+            onMapClick={() => {}}
             showTabs={true}
             defaultProvider="kakao"
             roadviewMode="selector"
@@ -197,6 +321,160 @@ function MapSearch() {
           />
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '1rem',
+            padding: '2rem',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <h2 style={{ marginBottom: '1.5rem', color: '#2563eb' }}>게시대 수정</h2>
+            <form onSubmit={handleEditSubmit}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이름 *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleEditInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>지역 *</label>
+                <select
+                  name="region"
+                  value={editFormData.region}
+                  onChange={handleEditInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem'
+                  }}
+                >
+                  <option value="">지역 선택</option>
+                  {Object.keys(REGION_COORDS).map(region => (
+                    <option key={region} value={region}>{region}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>주소</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={editFormData.address}
+                  onChange={handleEditInputChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>설명</label>
+                <textarea
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleEditInputChange}
+                  rows="3"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이미지</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ marginBottom: '0.5rem' }}
+                />
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="미리보기"
+                    style={{
+                      width: '100%',
+                      maxHeight: '200px',
+                      objectFit: 'cover',
+                      borderRadius: '0.5rem',
+                      marginTop: '0.5rem'
+                    }}
+                  />
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  수정
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

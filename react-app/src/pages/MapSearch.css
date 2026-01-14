@@ -110,6 +110,9 @@
     border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .map-search-stand-item:hover {

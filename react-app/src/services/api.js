@@ -113,6 +113,23 @@ export const standsAPI = {
     return response.json();
   },
 
+  // 게시대 수정 (파일 포함)
+  updateWithFile: async (id, formData) => {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/${id}/with-file`, {
+      method: 'PUT',
+      headers: headers,
+      body: formData
+    });
+    if (!response.ok) throw new Error('게시대 수정에 실패했습니다.');
+    return response.json();
+  },
+
   // 게시대 삭제
   delete: async (id) => {
     const response = await fetchWithAuth(`${API_BASE_URL}/stands/${id}`, {
