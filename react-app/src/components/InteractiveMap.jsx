@@ -53,6 +53,9 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
     const existingLabels = svgContainerRef.current.querySelectorAll('.region-label');
     existingLabels.forEach(label => label.remove());
 
+    // 허용된 지역들의 전체 경계 박스 계산
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
     paths.forEach(path => {
       const regionName = path.id;
 
@@ -64,6 +67,19 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
 
       // 허용된 지역인지 확인
       const isAllowed = allowedRegions.includes(regionName);
+
+      // 허용된 지역의 경계 박스 계산 (viewBox 조정용)
+      if (isAllowed) {
+        try {
+          const bbox = path.getBBox();
+          minX = Math.min(minX, bbox.x);
+          minY = Math.min(minY, bbox.y);
+          maxX = Math.max(maxX, bbox.x + bbox.width);
+          maxY = Math.max(maxY, bbox.y + bbox.height);
+        } catch (error) {
+          // getBBox 실패 시 무시
+        }
+      }
 
       // 기본 스타일 설정
       if (isAllowed) {
@@ -133,6 +149,16 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         path.style.opacity = '0.5';
       }
     });
+
+    // 허용된 지역들만 보이도록 viewBox 조정
+    if (svgElement && minX !== Infinity) {
+      const padding = 20; // 여백
+      const width = maxX - minX;
+      const height = maxY - minY;
+      svgElement.setAttribute('viewBox',
+        `${minX - padding} ${minY - padding} ${width + padding * 2} ${height + padding * 2}`
+      );
+    }
 
     // 클린업
     return () => {
