@@ -141,20 +141,13 @@ function NaverMap({
     }
   }, []);
 
-  // 중심 이동
+  // 중심 이동 및 줌 레벨 변경
   useEffect(() => {
     if (mapInstance.current && window.naver) {
       const moveLatLng = new window.naver.maps.LatLng(center.lat, center.lng);
-      mapInstance.current.setCenter(moveLatLng);
+      mapInstance.current.morph(moveLatLng, zoom, { duration: 300 });
     }
-  }, [center]);
-
-  // 줌 레벨 변경
-  useEffect(() => {
-    if (mapInstance.current) {
-      mapInstance.current.setZoom(zoom);
-    }
-  }, [zoom]);
+  }, [center.lat, center.lng, zoom]);
 
   // 마커 업데이트
   useEffect(() => {
@@ -179,7 +172,8 @@ function NaverMap({
         const infowindow = new window.naver.maps.InfoWindow({
           content: `<div style="padding:15px; min-width:200px; max-width:300px;">
             ${markerData.content}
-          </div>`
+          </div>`,
+          pixelOffset: new window.naver.maps.Point(0, -10)
         });
 
         window.naver.maps.Event.addListener(marker, 'click', function() {
@@ -187,6 +181,13 @@ function NaverMap({
             infowindow.close();
           } else {
             infowindow.open(mapInstance.current, marker);
+            // 인포윈도우가 열릴 때 지도 중심을 약간 위로 이동
+            const markerPosition = marker.getPosition();
+            const projection = mapInstance.current.getProjection();
+            const point = projection.fromCoordToOffset(markerPosition);
+            point.y -= 150; // 150px 위로 이동
+            const newCenter = projection.fromOffsetToCoord(point);
+            mapInstance.current.panTo(newCenter, { duration: 300 });
           }
         });
       }

@@ -190,33 +190,19 @@ function StandForm() {
     };
 
     try {
+      const submitFormData = new FormData();
+      submitFormData.append('name', formData.name);
+      submitFormData.append('region', formData.region);
+      submitFormData.append('address', formData.address);
+      submitFormData.append('latitude', formData.latitude);
+      submitFormData.append('longitude', formData.longitude);
+      submitFormData.append('description', formData.description || '');
+      
       if (formData.imageFile) {
-        // 파일이 있으면 FormData로 전송
-        const submitFormData = new FormData();
-        submitFormData.append('name', formData.name);
-        submitFormData.append('region', formData.region);
-        submitFormData.append('address', formData.address);
-        submitFormData.append('latitude', formData.latitude);
-        submitFormData.append('longitude', formData.longitude);
-        if (formData.description) {
-          submitFormData.append('description', formData.description);
-        }
         submitFormData.append('image', formData.imageFile);
-        
-        await standsAPI.createWithFile(submitFormData);
-      } else {
-        // 파일이 없으면 JSON으로 전송
-        const submitData = {
-          name: formData.name,
-          region: formData.region,
-          address: formData.address,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          description: formData.description || null
-        };
-        
-        await standsAPI.create(submitData);
       }
+      
+      await standsAPI.createWithFile(submitFormData);
       
       alert('게시대가 저장되었습니다.');
       

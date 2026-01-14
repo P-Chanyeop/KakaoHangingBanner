@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { buttonsAPI, calendarAPI } from '../services/api';
+import { buttonsAPI, calendarAPI, heroImageAPI } from '../services/api';
 import './Home.css';
 
 function Home() {
@@ -12,10 +12,13 @@ function Home() {
   const [allEvents, setAllEvents] = useState({});
   const [eventContent, setEventContent] = useState('');
   const [showEventForm, setShowEventForm] = useState(false);
+  const [hero1Image, setHero1Image] = useState(null);
+  const [hero2Image, setHero2Image] = useState(null);
 
   useEffect(() => {
     loadButtons();
     loadEvents();
+    loadHeroImages();
   }, [currentYear, currentMonth]);
 
   const loadButtons = async () => {
@@ -25,6 +28,18 @@ function Home() {
       setGreenButtons(allButtons.filter(btn => btn.color === 'green'));
     } catch (error) {
       console.error('버튼 로드 실패:', error);
+    }
+  };
+
+  const loadHeroImages = async () => {
+    try {
+      const images = await heroImageAPI.getAll();
+      const hero1 = images.find(img => img.name === 'hero1');
+      const hero2 = images.find(img => img.name === 'hero2');
+      setHero1Image(hero1?.imageUrl);
+      setHero2Image(hero2?.imageUrl);
+    } catch (error) {
+      console.error('Hero 이미지 로드 실패:', error);
     }
   };
 
@@ -220,8 +235,15 @@ function Home() {
         {/* Hero Image 1 */}
         <div className="container">
           <div className="hero-image">
-            <i className="fas fa-image" style={{ fontSize: '3rem', opacity: 0.3, marginRight: '1rem' }}></i>
-            <span>Hero Image 1 (이미지 영역)</span>
+            {hero1Image ? (
+              <img src={hero1Image} alt="Hero 1" />
+            ) : (
+              <div className="hero-image-placeholder">
+                <i className="fas fa-image" style={{ fontSize: '3rem', opacity: 0.3, marginBottom: '1rem' }}></i>
+                <span>Hero Image 1 (이미지 영역)</span>
+                <p className="hero-image-size-info">권장 이미지 크기: 1200 x 400px</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -256,8 +278,15 @@ function Home() {
         {/* Hero Image 2 */}
         <div className="container">
           <div className="hero-image">
-            <i className="fas fa-image" style={{ fontSize: '3rem', opacity: 0.3, marginRight: '1rem' }}></i>
-            <span>Hero Image 2 (이미지 영역)</span>
+            {hero2Image ? (
+              <img src={hero2Image} alt="Hero 2" />
+            ) : (
+              <div className="hero-image-placeholder">
+                <i className="fas fa-image" style={{ fontSize: '3rem', opacity: 0.3, marginBottom: '1rem' }}></i>
+                <span>Hero Image 2 (이미지 영역)</span>
+                <p className="hero-image-size-info">권장 이미지 크기: 1200 x 400px</p>
+              </div>
+            )}
           </div>
         </div>
 

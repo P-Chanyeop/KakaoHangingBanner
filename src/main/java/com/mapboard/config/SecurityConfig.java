@@ -61,15 +61,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/stands/**").permitAll()
-                        .requestMatchers("/api/button-links/**").permitAll()
-                        .requestMatchers("/api/calendar-events/**").permitAll()
+                        .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
                         // 관리자만 접근 가능
-                        .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()

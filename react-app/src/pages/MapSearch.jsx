@@ -316,6 +316,7 @@ function MapSearch() {
             onMapClick={() => {}}
             showTabs={true}
             defaultProvider="kakao"
+            autoFitBounds={false}
             roadviewMode="selector"
             style={{ width: '100%', height: '100%' }}
           />

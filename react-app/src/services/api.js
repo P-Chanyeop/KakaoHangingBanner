@@ -232,3 +232,45 @@ export const calendarAPI = {
     if (!response.ok) throw new Error('일정 삭제에 실패했습니다.');
   }
 };
+
+
+// Hero 이미지 관련 API
+export const heroImageAPI = {
+  // 모든 Hero 이미지 조회
+  getAll: async () => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/hero-images`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Hero 이미지 데이터를 불러오는데 실패했습니다.');
+    return response.json();
+  },
+
+  // 이름으로 Hero 이미지 조회
+  getByName: async (name) => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/hero-images/${name}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Hero 이미지를 불러오는데 실패했습니다.');
+    return response.json();
+  },
+
+  // Hero 이미지 업로드
+  upload: async (name, imageFile) => {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    const response = await fetchWithAuth(`${API_BASE_URL}/hero-images/${name}`, {
+      method: 'POST',
+      headers: headers,
+      body: formData
+    });
+    if (!response.ok) throw new Error('Hero 이미지 업로드에 실패했습니다.');
+    return response.json();
+  }
+};

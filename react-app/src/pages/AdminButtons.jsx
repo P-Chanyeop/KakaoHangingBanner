@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { buttonsAPI } from '../services/api';
+import { buttonsAPI, heroImageAPI } from '../services/api';
 import './AdminButtons.css';
 
 function AdminButtons() {
@@ -14,9 +14,13 @@ function AdminButtons() {
     orderIndex: 1,
     active: true
   });
+  const [heroImages, setHeroImages] = useState({ hero1: null, hero2: null });
+  const [hero1Preview, setHero1Preview] = useState(null);
+  const [hero2Preview, setHero2Preview] = useState(null);
 
   useEffect(() => {
     loadButtons();
+    loadHeroImages();
   }, []);
 
   const loadButtons = async () => {
@@ -25,6 +29,52 @@ function AdminButtons() {
       setButtons(data);
     } catch (error) {
       console.error('버튼 로드 실패:', error);
+    }
+  };
+
+  const loadHeroImages = async () => {
+    try {
+      const images = await heroImageAPI.getAll();
+      const hero1 = images.find(img => img.name === 'hero1');
+      const hero2 = images.find(img => img.name === 'hero2');
+      setHeroImages({ hero1, hero2 });
+      if (hero1) setHero1Preview(hero1.imageUrl);
+      if (hero2) setHero2Preview(hero2.imageUrl);
+    } catch (error) {
+      console.error('Hero 이미지 로드 실패:', error);
+    }
+  };
+
+  const handleHeroImageUpload = async (name, file) => {
+    if (!file) return;
+    
+    try {
+      await heroImageAPI.upload(name, file);
+      alert('Hero 이미지가 업로드되었습니다.');
+      loadHeroImages();
+    } catch (error) {
+      console.error('Hero 이미지 업로드 실패:', error);
+      alert('Hero 이미지 업로드에 실패했습니다.');
+    }
+  };
+
+  const handleHero1Change = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => setHero1Preview(e.target.result);
+      reader.readAsDataURL(file);
+      handleHeroImageUpload('hero1', file);
+    }
+  };
+
+  const handleHero2Change = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => setHero2Preview(e.target.result);
+      reader.readAsDataURL(file);
+      handleHeroImageUpload('hero2', file);
     }
   };
 
@@ -109,11 +159,58 @@ function AdminButtons() {
   return (
     <main className="admin-container">
       <div className="admin-header">
-        <h1 className="admin-title">버튼 링크 관리</h1>
-        <button className="btn btn-primary" onClick={() => openModal()}>
-          <i className="fas fa-plus btn-icon"></i>새 버튼 추가
-        </button>
+        <h1 className="admin-title">관리자 페이지</h1>
       </div>
+
+      {/* Hero 이미지 관리 섹션 */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ marginBottom: '1.5rem', color: '#2563eb' }}>Hero 이미지 관리</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div style={{ border: '2px dashed #e0e0e0', borderRadius: '0.5rem', padding: '1.5rem', textAlign: 'center' }}>
+            <h3 style={{ marginBottom: '1rem' }}>Hero Image 1</h3>
+            {hero1Preview && (
+              <img src={hero1Preview} alt="Hero 1" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '0.5rem', marginBottom: '1rem' }} />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleHero1Change}
+              style={{ display: 'none' }}
+              id="hero1-upload"
+            />
+            <label htmlFor="hero1-upload" className="btn btn-primary" style={{ cursor: 'pointer' }}>
+              <i className="fas fa-upload"></i> 이미지 업로드
+            </label>
+          </div>
+          <div style={{ border: '2px dashed #e0e0e0', borderRadius: '0.5rem', padding: '1.5rem', textAlign: 'center' }}>
+            <h3 style={{ marginBottom: '1rem' }}>Hero Image 2</h3>
+            {hero2Preview && (
+              <img src={hero2Preview} alt="Hero 2" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '0.5rem', marginBottom: '1rem' }} />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleHero2Change}
+              style={{ display: 'none' }}
+              id="hero2-upload"
+            />
+            <label htmlFor="hero2-upload" className="btn btn-primary" style={{ cursor: 'pointer' }}>
+              <i className="fas fa-upload"></i> 이미지 업로드
+            </label>
+          </div>
+        </div>
+      </section>
+
+      {/* 버튼 링크 관리 섹션 */}
+      <section>
+        <div className="admin-header">
+          <h2 className="admin-title">버튼 링크 관리</h2>
+          <button className="btn btn-primary" onClick={() => openModal()}>
+            <i className="fas fa-plus btn-icon"></i>새 버튼 추가
+          </button>
+        </div>
+
+      </section>
 
       <div className="table-container">
         <table className="admin-table">
