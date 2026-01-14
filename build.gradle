@@ -92,6 +92,11 @@ task cleanReactBuild(type: Delete) {
     delete "${project.projectDir}/src/main/resources/static"
 }
 
+// processResources가 copyReactBuild에 의존하도록 설정
+processResources {
+    dependsOn copyReactBuild
+}
+
 // bootJar 실행 시 React 빌드 포함
 bootJar {
     dependsOn copyReactBuild
