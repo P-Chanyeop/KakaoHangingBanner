@@ -64,6 +64,13 @@ node {
     nodeProjectDir = file("${project.projectDir}/react-app")
 }
 
+// React 빌드 결과물 정리 (빌드 전에 기존 파일 삭제)
+task cleanReactBuild(type: Delete) {
+    description = 'Clean React build output and static folder'
+    delete "${project.projectDir}/react-app/build"
+    delete "${project.projectDir}/src/main/resources/static"
+}
+
 // React 의존성 설치
 task installReact(type: com.github.gradle.node.npm.task.NpmTask) {
     description = 'Install React dependencies'
@@ -79,13 +86,6 @@ task buildReact(type: com.github.gradle.node.npm.task.NpmTask, dependsOn: [insta
 
     // 빌드 전에 반드시 정리
     mustRunAfter cleanReactBuild
-}
-
-// React 빌드 결과물 정리 (빌드 전에 기존 파일 삭제)
-task cleanReactBuild(type: Delete) {
-    description = 'Clean React build output and static folder'
-    delete "${project.projectDir}/react-app/build"
-    delete "${project.projectDir}/src/main/resources/static"
 }
 
 // React 빌드 결과물을 Spring Boot static 폴더로 복사
