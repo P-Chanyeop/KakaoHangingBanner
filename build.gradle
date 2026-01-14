@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.4'
+    id 'com.github.node-gradle.node' version '7.0.1'
 }
 
 group = 'com.mapboard'
@@ -51,4 +52,52 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Node.js 설정
+node {
+    version = '20.11.0'
+    npmVersion = '10.2.4'
+    download = true
+    workDir = file("${project.projectDir}/.gradle/nodejs")
+    npmWorkDir = file("${project.projectDir}/.gradle/npm")
+    nodeProjectDir = file("${project.projectDir}/react-app")
+}
+
+// React 의존성 설치
+task installReact(type: com.github.gradle.node.npm.task.NpmTask) {
+    description = 'Install React dependencies'
+    workingDir = file("${project.projectDir}/react-app")
+    args = ['install']
+}
+
+// React 앱 빌드
+task buildReact(type: com.github.gradle.node.npm.task.NpmTask, dependsOn: installReact) {
+    description = 'Build React application'
+    workingDir = file("${project.projectDir}/react-app")
+    args = ['run', 'build']
+}
+
+// React 빌드 결과물을 Spring Boot static 폴더로 복사
+task copyReactBuild(type: Copy, dependsOn: buildReact) {
+    description = 'Copy React build to Spring Boot static folder'
+    from "${project.projectDir}/react-app/build"
+    into "${project.projectDir}/src/main/resources/static"
+}
+
+// React 빌드 결과물 정리
+task cleanReactBuild(type: Delete) {
+    description = 'Clean React build output'
+    delete "${project.projectDir}/react-app/build"
+    delete "${project.projectDir}/src/main/resources/static"
+}
+
+// bootJar 실행 시 React 빌드 포함
+bootJar {
+    dependsOn copyReactBuild
+}
+
+// clean 실행 시 React 빌드도 정리
+clean {
+    dependsOn cleanReactBuild
 }
