@@ -72,24 +72,30 @@ task installReact(type: com.github.gradle.node.npm.task.NpmTask) {
 }
 
 // React 앱 빌드
-task buildReact(type: com.github.gradle.node.npm.task.NpmTask, dependsOn: installReact) {
+task buildReact(type: com.github.gradle.node.npm.task.NpmTask, dependsOn: [installReact, cleanReactBuild]) {
     description = 'Build React application'
     workingDir = file("${project.projectDir}/react-app")
     args = ['run', 'build']
+
+    // 빌드 전에 반드시 정리
+    mustRunAfter cleanReactBuild
+}
+
+// React 빌드 결과물 정리 (빌드 전에 기존 파일 삭제)
+task cleanReactBuild(type: Delete) {
+    description = 'Clean React build output and static folder'
+    delete "${project.projectDir}/react-app/build"
+    delete "${project.projectDir}/src/main/resources/static"
 }
 
 // React 빌드 결과물을 Spring Boot static 폴더로 복사
-task copyReactBuild(type: Copy, dependsOn: buildReact) {
+task copyReactBuild(type: Copy, dependsOn: [cleanReactBuild, buildReact]) {
     description = 'Copy React build to Spring Boot static folder'
     from "${project.projectDir}/react-app/build"
     into "${project.projectDir}/src/main/resources/static"
-}
 
-// React 빌드 결과물 정리
-task cleanReactBuild(type: Delete) {
-    description = 'Clean React build output'
-    delete "${project.projectDir}/react-app/build"
-    delete "${project.projectDir}/src/main/resources/static"
+    // 빌드 순서 보장: cleanReactBuild -> buildReact -> copyReactBuild
+    mustRunAfter cleanReactBuild
 }
 
 // processResources가 copyReactBuild에 의존하도록 설정

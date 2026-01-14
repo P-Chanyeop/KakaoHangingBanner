@@ -30,10 +30,23 @@ public class WebConfig implements WebMvcConfigurer {
         // 업로드된 이미지 파일을 정적 리소스로 서빙 (설정값 사용)
         registry.addResourceHandler(urlPrefix + "/**")
                 .addResourceLocations("file:" + uploadDir);
-        
-        // React 빌드 파일 캐시 무효화
+
+        // React 빌드 파일 캐시 완전 비활성화
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/static/")
-                .setCachePeriod(0);
+                .setCachePeriod(0)
+                .resourceChain(false);
+
+        // index.html도 캐시 비활성화
+        registry.addResourceHandler("/index.html")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(0)
+                .resourceChain(false);
+
+        // 모든 정적 리소스 캐시 비활성화
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(0)
+                .resourceChain(false);
     }
 }
