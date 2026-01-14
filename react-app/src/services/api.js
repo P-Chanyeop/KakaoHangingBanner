@@ -4,41 +4,77 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? '/api'
   : 'http://localhost:8081/api';
 
+// JWT 토큰을 포함한 헤더 생성
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
+// API 요청 처리 (401 처리 포함)
+const fetchWithAuth = async (url, options = {}) => {
+  const response = await fetch(url, options);
+
+  // 401 Unauthorized 응답 시 로그인 페이지로 리다이렉트
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+    throw new Error('인증이 필요합니다.');
+  }
+
+  return response;
+};
+
 // 게시대 관련 API
 export const standsAPI = {
   // 모든 게시대 조회
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/stands`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('게시대 데이터를 불러오는데 실패했습니다.');
     return response.json();
   },
 
   // ID로 게시대 조회
   getById: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/stands/${id}`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/${id}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('게시대 정보를 불러오는데 실패했습니다.');
     return response.json();
   },
 
   // 지역별 게시대 조회
   getByRegion: async (region) => {
-    const response = await fetch(`${API_BASE_URL}/stands?region=${region}`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands?region=${region}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('게시대 데이터를 불러오는데 실패했습니다.');
     return response.json();
   },
 
   // 검색
   search: async (keyword) => {
-    const response = await fetch(`${API_BASE_URL}/stands/search?keyword=${encodeURIComponent(keyword)}`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/search?keyword=${encodeURIComponent(keyword)}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('검색에 실패했습니다.');
     return response.json();
   },
 
   // 게시대 생성
   create: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/stands`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error('게시대 등록에 실패했습니다.');
@@ -47,8 +83,15 @@ export const standsAPI = {
 
   // 파일과 함께 게시대 생성
   createWithFile: async (formData) => {
-    const response = await fetch(`${API_BASE_URL}/stands/with-file`, {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/with-file`, {
       method: 'POST',
+      headers: headers,
       body: formData // FormData는 Content-Type 헤더를 자동으로 설정
     });
     if (!response.ok) {
@@ -61,9 +104,9 @@ export const standsAPI = {
 
   // 게시대 수정
   update: async (id, data) => {
-    const response = await fetch(`${API_BASE_URL}/stands/${id}`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error('게시대 수정에 실패했습니다.');
@@ -72,15 +115,18 @@ export const standsAPI = {
 
   // 게시대 삭제
   delete: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/stands/${id}`, {
-      method: 'DELETE'
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('게시대 삭제에 실패했습니다.');
   },
 
   // 주소를 좌표로 변환 (Geocoding)
   geocode: async (address) => {
-    const response = await fetch(`${API_BASE_URL}/stands/geocode?address=${encodeURIComponent(address)}`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/geocode?address=${encodeURIComponent(address)}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('주소 변환에 실패했습니다.');
     return response.json();
   }
@@ -90,23 +136,27 @@ export const standsAPI = {
 export const buttonsAPI = {
   // 모든 버튼 조회
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/button-links`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/button-links`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('버튼 데이터를 불러오는데 실패했습니다.');
     return response.json();
   },
 
   // 색상별 버튼 조회
   getByType: async (type) => {
-    const response = await fetch(`${API_BASE_URL}/button-links/type/${type}`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/button-links/type/${type}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('버튼 데이터를 불러오는데 실패했습니다.');
     return response.json();
   },
 
   // 버튼 생성
   create: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/button-links`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/button-links`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error('버튼 등록에 실패했습니다.');
@@ -115,9 +165,9 @@ export const buttonsAPI = {
 
   // 버튼 수정
   update: async (id, data) => {
-    const response = await fetch(`${API_BASE_URL}/button-links/${id}`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/button-links/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error('버튼 수정에 실패했습니다.');
@@ -126,8 +176,9 @@ export const buttonsAPI = {
 
   // 버튼 삭제
   delete: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/button-links/${id}`, {
-      method: 'DELETE'
+    const response = await fetchWithAuth(`${API_BASE_URL}/button-links/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('버튼 삭제에 실패했습니다.');
   }
@@ -137,16 +188,18 @@ export const buttonsAPI = {
 export const calendarAPI = {
   // 날짜 범위로 이벤트 조회
   getByDateRange: async (startDate, endDate) => {
-    const response = await fetch(`${API_BASE_URL}/calendar-events/range?startDate=${startDate}&endDate=${endDate}`);
+    const response = await fetchWithAuth(`${API_BASE_URL}/calendar-events/range?startDate=${startDate}&endDate=${endDate}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('일정 데이터를 불러오는데 실패했습니다.');
     return response.json();
   },
 
   // 이벤트 생성
   create: async (data) => {
-    const response = await fetch(`${API_BASE_URL}/calendar-events`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/calendar-events`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error('일정 등록에 실패했습니다.');
@@ -155,8 +208,9 @@ export const calendarAPI = {
 
   // 이벤트 삭제
   delete: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/calendar-events/${id}`, {
-      method: 'DELETE'
+    const response = await fetchWithAuth(`${API_BASE_URL}/calendar-events/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('일정 삭제에 실패했습니다.');
   }

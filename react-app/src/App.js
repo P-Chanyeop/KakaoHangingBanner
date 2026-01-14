@@ -1,12 +1,34 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import MapSearch from './pages/MapSearch';
 import StandForm from './pages/StandForm';
 import AdminButtons from './pages/AdminButtons';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import './assets/css/common.css';
+
+// 보호된 라우트 컴포넌트
+function ProtectedRoute({ children, requireAdmin = false }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requireAdmin && user.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
 
 function AppContent() {
   const location = useLocation();
@@ -16,10 +38,33 @@ function AppContent() {
     <div className="App">
       <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/map" element={<MapSearch />} />
-        <Route path="/stands/new" element={<StandForm />} />
-        <Route path="/admin/buttons" element={<AdminButtons />} />
+        {/* 공개 경로 */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* 보호된 경로 */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } />
+        <Route path="/map" element={
+          <ProtectedRoute>
+            <MapSearch />
+          </ProtectedRoute>
+        } />
+        <Route path="/stands/new" element={
+          <ProtectedRoute>
+            <StandForm />
+          </ProtectedRoute>
+        } />
+
+        {/* 관리자 전용 경로 */}
+        <Route path="/admin/buttons" element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminButtons />
+          </ProtectedRoute>
+        } />
       </Routes>
       {!hideFooter && <Footer />}
     </div>
@@ -29,7 +74,9 @@ function AppContent() {
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }
