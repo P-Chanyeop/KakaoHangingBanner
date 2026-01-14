@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { buttonsAPI, calendarAPI, heroImageAPI, popupMessagesAPI } from '../services/api';
+import InteractiveMap from '../components/InteractiveMap';
 import './Home.css';
 
 function Home() {
@@ -18,6 +19,9 @@ function Home() {
   const [noticeMessage, setNoticeMessage] = useState('');
   const [showWebhardModal, setShowWebhardModal] = useState(false);
   const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [showRegionModal, setShowRegionModal] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [regionMessage, setRegionMessage] = useState('');
 
   useEffect(() => {
     loadButtons();
@@ -62,6 +66,21 @@ function Home() {
       setWebhardMessage('웹하드 정보가 등록되지 않았습니다.');
       setNoticeMessage('공지사항이 등록되지 않았습니다.');
     }
+  };
+
+  /**
+   * 지역 클릭 핸들러
+   * @param {string} regionName - 클릭된 지역명
+   */
+  const handleRegionClick = async (regionName) => {
+    setSelectedRegion(regionName);
+    try {
+      const message = await popupMessagesAPI.getByName(`region_${regionName}`);
+      setRegionMessage(message.content || `${regionName}에 대한 정보가 등록되지 않았습니다.`);
+    } catch (error) {
+      setRegionMessage(`${regionName}에 대한 정보가 등록되지 않았습니다.`);
+    }
+    setShowRegionModal(true);
   };
 
   const loadEvents = async () => {
@@ -253,18 +272,10 @@ function Home() {
 
       {/* Main Content */}
       <main>
-        {/* Hero Image 1 */}
+        {/* 경북 지도 */}
         <div className="container">
           <div className="hero-image">
-            {hero1Image ? (
-              <img src={hero1Image} alt="Hero 1" />
-            ) : (
-              <div className="hero-image-placeholder">
-                <i className="fas fa-image" style={{ fontSize: '3rem', opacity: 0.3, marginBottom: '1rem' }}></i>
-                <span>Hero Image 1 (이미지 영역)</span>
-                <p className="hero-image-size-info">권장 이미지 크기: 1200 x 400px</p>
-              </div>
-            )}
+            <InteractiveMap region="gyeongbuk" onRegionClick={handleRegionClick} />
           </div>
         </div>
 
@@ -296,18 +307,10 @@ function Home() {
           </div>
         </section>
 
-        {/* Hero Image 2 */}
+        {/* 경남 지도 */}
         <div className="container">
           <div className="hero-image">
-            {hero2Image ? (
-              <img src={hero2Image} alt="Hero 2" />
-            ) : (
-              <div className="hero-image-placeholder">
-                <i className="fas fa-image" style={{ fontSize: '3rem', opacity: 0.3, marginBottom: '1rem' }}></i>
-                <span>Hero Image 2 (이미지 영역)</span>
-                <p className="hero-image-size-info">권장 이미지 크기: 1200 x 400px</p>
-              </div>
-            )}
+            <InteractiveMap region="gyeongnam" onRegionClick={handleRegionClick} />
           </div>
         </div>
 
@@ -501,6 +504,21 @@ function Home() {
             <h2><i className="fas fa-bullhorn"></i> 공지사항</h2>
             <div className="popup-modal-body">
               <pre>{noticeMessage}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 지역 정보 모달 */}
+      {showRegionModal && (
+        <div className="popup-modal-overlay" onClick={() => setShowRegionModal(false)}>
+          <div className="popup-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="popup-modal-close" onClick={() => setShowRegionModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <h2><i className="fas fa-map-marker-alt"></i> {selectedRegion}</h2>
+            <div className="popup-modal-body">
+              <pre>{regionMessage}</pre>
             </div>
           </div>
         </div>
