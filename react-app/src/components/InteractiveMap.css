@@ -2,6 +2,7 @@
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
+  padding: 30px 0;
 }
 
 .map-wrapper {
@@ -12,6 +13,16 @@
   border-radius: 12px;
   overflow: visible;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-wrapper svg {
+  display: block;
+  margin: 0 auto;
+  width: 100%;
+  height: auto;
 }
 
 .map-svg {
