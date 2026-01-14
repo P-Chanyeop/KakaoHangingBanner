@@ -145,6 +145,32 @@ tail -f application.log
 
 ## 5. 트러블슈팅
 
+### 캐시 문제로 최신 파일이 반영되지 않는 경우
+
+프로젝트에는 다음과 같은 캐시 방지 설정이 적용되어 있습니다:
+
+1. **React 빌드 자동 정리**: 매 빌드마다 기존 빌드 폴더와 static 폴더를 완전히 삭제
+2. **HTML 캐시 방지 메타 태그**: index.html에 Cache-Control 헤더 설정
+3. **Spring Boot 캐시 비활성화**: WebConfig에서 모든 정적 리소스 캐시 무효화
+4. **파일명 해시**: React가 빌드 시 자동으로 파일명에 해시 추가
+
+그럼에도 캐시 문제가 발생하면:
+
+```bash
+# 1. 완전히 깨끗한 빌드
+./gradlew clean
+rm -rf react-app/build
+rm -rf src/main/resources/static
+./gradlew bootJar
+
+# 2. 브라우저 캐시 강제 새로고침
+# Chrome/Edge: Ctrl + Shift + R (Windows) / Cmd + Shift + R (Mac)
+# Firefox: Ctrl + F5 (Windows) / Cmd + Shift + R (Mac)
+
+# 3. 브라우저 개발자 도구에서 캐시 비활성화
+# F12 -> Network 탭 -> "Disable cache" 체크
+```
+
 ### React 빌드 실패
 ```bash
 # Node 모듈 재설치
