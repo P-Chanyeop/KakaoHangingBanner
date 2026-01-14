@@ -283,3 +283,49 @@ export const heroImageAPI = {
     return response.json();
   }
 };
+
+/**
+ * 팝업 메시지 관련 API
+ */
+export const popupMessagesAPI = {
+  /**
+   * 모든 팝업 메시지 조회
+   * @returns {Promise<Array>} 팝업 메시지 배열
+   */
+  getAll: async () => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/popup-messages`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('팝업 메시지를 불러오는데 실패했습니다.');
+    return response.json();
+  },
+
+  /**
+   * 이름으로 팝업 메시지 조회
+   * @param {string} name - 팝업 메시지 이름 (webhard, notice)
+   * @returns {Promise<Object>} 팝업 메시지 객체
+   */
+  getByName: async (name) => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/popup-messages/${name}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('팝업 메시지를 불러오는데 실패했습니다.');
+    return response.json();
+  },
+
+  /**
+   * 팝업 메시지 저장
+   * @param {string} name - 팝업 메시지 이름
+   * @param {string} content - 팝업 메시지 내용
+   * @returns {Promise<Object>} 저장된 팝업 메시지 객체
+   */
+  save: async (name, content) => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/popup-messages/${name}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ content })
+    });
+    if (!response.ok) throw new Error('팝업 메시지 저장에 실패했습니다.');
+    return response.json();
+  }
+};

@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import MapSearch from './pages/MapSearch';
 import StandForm from './pages/StandForm';
 import AdminButtons from './pages/AdminButtons';
+import AdminPopupMessages from './pages/AdminPopupMessages';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import './assets/css/common.css';
@@ -63,6 +64,11 @@ function AppContent() {
         <Route path="/admin/buttons" element={
           <ProtectedRoute requireAdmin={true}>
             <AdminButtons />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/popup-messages" element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminPopupMessages />
           </ProtectedRoute>
         } />
       </Routes>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { buttonsAPI, calendarAPI, heroImageAPI } from '../services/api';
+import { buttonsAPI, calendarAPI, heroImageAPI, popupMessagesAPI } from '../services/api';
 import './Home.css';
 
 function Home() {
@@ -14,11 +14,16 @@ function Home() {
   const [showEventForm, setShowEventForm] = useState(false);
   const [hero1Image, setHero1Image] = useState(null);
   const [hero2Image, setHero2Image] = useState(null);
+  const [webhardMessage, setWebhardMessage] = useState('');
+  const [noticeMessage, setNoticeMessage] = useState('');
+  const [showWebhardModal, setShowWebhardModal] = useState(false);
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
 
   useEffect(() => {
     loadButtons();
     loadEvents();
     loadHeroImages();
+    loadPopupMessages();
   }, [currentYear, currentMonth]);
 
   const loadButtons = async () => {
@@ -40,6 +45,22 @@ function Home() {
       setHero2Image(hero2?.imageUrl);
     } catch (error) {
       console.error('Hero 이미지 로드 실패:', error);
+    }
+  };
+
+  /**
+   * 팝업 메시지 로드
+   */
+  const loadPopupMessages = async () => {
+    try {
+      const webhard = await popupMessagesAPI.getByName('webhard');
+      const notice = await popupMessagesAPI.getByName('notice');
+      setWebhardMessage(webhard.content || '웹하드 정보가 등록되지 않았습니다.');
+      setNoticeMessage(notice.content || '공지사항이 등록되지 않았습니다.');
+    } catch (error) {
+      console.error('팝업 메시지 로드 실패:', error);
+      setWebhardMessage('웹하드 정보가 등록되지 않았습니다.');
+      setNoticeMessage('공지사항이 등록되지 않았습니다.');
     }
   };
 
@@ -315,6 +336,26 @@ function Home() {
                 <p>등록된 버튼이 없습니다. <Link to="/admin/buttons" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>관리자 페이지</Link>에서 버튼을 추가하세요.</p>
               </div>
             )}
+            
+            {/* 추가 버튼들 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
+              <button
+                className="btn btn-orange"
+                onClick={() => setShowWebhardModal(true)}
+                style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
+              >
+                <i className="fas fa-hdd btn-icon"></i>
+                <span>웹하드 아이디/비밀번호</span>
+              </button>
+              <button
+                className="btn btn-orange"
+                onClick={() => setShowNoticeModal(true)}
+                style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
+              >
+                <i className="fas fa-bullhorn btn-icon"></i>
+                <span>공지사항</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -434,6 +475,36 @@ function Home() {
           </div>
         </section>
       </main>
+
+      {/* 웹하드 모달 */}
+      {showWebhardModal && (
+        <div className="popup-modal-overlay" onClick={() => setShowWebhardModal(false)}>
+          <div className="popup-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="popup-modal-close" onClick={() => setShowWebhardModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <h2><i className="fas fa-hdd"></i> 웹하드 아이디/비밀번호</h2>
+            <div className="popup-modal-body">
+              <pre>{webhardMessage}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 공지사항 모달 */}
+      {showNoticeModal && (
+        <div className="popup-modal-overlay" onClick={() => setShowNoticeModal(false)}>
+          <div className="popup-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="popup-modal-close" onClick={() => setShowNoticeModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <h2><i className="fas fa-bullhorn"></i> 공지사항</h2>
+            <div className="popup-modal-body">
+              <pre>{noticeMessage}</pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -361,6 +361,7 @@ function MapSearch() {
             defaultProvider="kakao"
             autoFitBounds={false}
             roadviewMode="selector"
+            showPermanentLabels={true}
             style={{ width: '100%', height: '100%' }}
           />
         </div>

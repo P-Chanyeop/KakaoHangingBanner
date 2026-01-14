@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { buttonsAPI, heroImageAPI } from '../services/api';
 import './AdminButtons.css';
 
@@ -160,6 +161,16 @@ function AdminButtons() {
     <main className="admin-container">
       <div className="admin-header">
         <h1 className="admin-title">관리자 페이지</h1>
+        <Link to="/admin/popup-messages" style={{ 
+          padding: '0.75rem 1.5rem', 
+          background: '#f97316', 
+          color: 'white', 
+          borderRadius: '0.5rem', 
+          textDecoration: 'none',
+          fontWeight: '500'
+        }}>
+          팝업 메시지 관리
+        </Link>
       </div>
 
       {/* Hero 이미지 관리 섹션 */}

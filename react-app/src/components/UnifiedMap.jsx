@@ -23,7 +23,8 @@ function UnifiedMap({
   defaultProvider = 'kakao',
   autoFitBounds = true,
   roadviewMode = 'toggle',
-  roadviewTarget = null // 로드뷰 대상 좌표
+  roadviewTarget = null, // 로드뷰 대상 좌표
+  showPermanentLabels = false // 상시 라벨 표시 여부
 }) {
   const [mapProvider, setMapProvider] = useState(defaultProvider);
   const leafletMapRef = useRef(null);
@@ -150,6 +151,7 @@ function UnifiedMap({
           showRoadview={true}
           roadviewMode={roadviewMode}
           roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
+          showPermanentLabels={showPermanentLabels}
         />
       )}
 
@@ -163,6 +165,7 @@ function UnifiedMap({
           autoFitBounds={autoFitBounds}
           roadviewMode={roadviewMode}
           roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
+          showPermanentLabels={showPermanentLabels}
         />
       )}
     </div>
