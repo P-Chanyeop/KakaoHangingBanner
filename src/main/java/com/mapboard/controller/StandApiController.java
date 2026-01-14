@@ -26,6 +26,12 @@ public class StandApiController {
     private static final Logger logger = LoggerFactory.getLogger(StandApiController.class);
     private final StandService standService;
     private final RestTemplate restTemplate;
+    
+    @org.springframework.beans.factory.annotation.Value("${file.upload.dir}")
+    private String uploadDir;
+    
+    @org.springframework.beans.factory.annotation.Value("${file.upload.url-prefix}")
+    private String urlPrefix;
 
     @Autowired
     public StandApiController(StandService standService) {
@@ -95,32 +101,174 @@ public class StandApiController {
     }
 
     /**
-     * 새로운 게시대를 생성합니다.
+     * 파일과 함께 새로운 게시대를 생성합니다.
      *
-     * @param stand 생성할 게시대 정보
+     * @param name 게시대 이름
+     * @param region 지역
+     * @param address 주소
+     * @param latitude 위도
+     * @param longitude 경도
+     * @param description 설명 (선택)
+     * @param image 이미지 파일 (선택)
      * @return 생성된 게시대와 HTTP 201 Created 상태
      */
-    @PostMapping
-    public ResponseEntity<Stand> createStand(@RequestBody Stand stand) {
-        logger.info("POST /api/stands 요청 받음. 데이터: {}", stand);
-        Stand createdStand = standService.createStand(stand);
-        logger.info("게시대 생성 완료. ID: {}", createdStand.getId());
-        return new ResponseEntity<>(createdStand, HttpStatus.CREATED);
+    @PostMapping(value = "/with-file", consumes = "multipart/form-data")
+    public ResponseEntity<Stand> createStandWithFile(
+            @RequestParam("name") String name,
+            @RequestParam("region") String region,
+            @RequestParam("address") String address,
+            @RequestParam("latitude") Double latitude,
+            @RequestParam("longitude") Double longitude,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
+        
+        logger.info("POST /api/stands/with-file 요청 받음. name={}, region={}, address={}", name, region, address);
+        
+        try {
+            // Stand 객체 생성
+            Stand stand = Stand.builder()
+                    .name(name)
+                    .region(region)
+                    .address(address)
+                    .latitude(latitude)
+                    .longitude(longitude)
+                    .description(description)
+                    .build();
+            
+            // 이미지 파일이 있으면 저장
+            if (image != null && !image.isEmpty()) {
+                String imageUrl = saveImageFile(image);
+                stand.setImageUrl(imageUrl);
+                logger.info("이미지 파일 저장 완료: {}", imageUrl);
+            }
+            
+            Stand createdStand = standService.createStand(stand);
+            logger.info("게시대 생성 완료. ID: {}", createdStand.getId());
+            return new ResponseEntity<>(createdStand, HttpStatus.CREATED);
+            
+        } catch (Exception e) {
+            logger.error("파일 업로드 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
-     * 기존 게시대 정보를 업데이트합니다.
+     * 이미지 파일을 저장하고 URL을 반환합니다.
+     *
+     * @param file 업로드된 이미지 파일
+     * @return 저장된 파일의 URL
+     * @throws Exception 파일 저장 실패 시
+     */
+    private String saveImageFile(org.springframework.web.multipart.MultipartFile file) throws Exception {
+        // 파일 검증
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        
+        // 이미지 파일인지 확인
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+        }
+        
+        // 파일 크기 제한 (5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("파일 크기는 5MB 이하여야 합니다.");
+        }
+        
+        // 업로드 디렉토리 생성 (설정값 사용)
+        java.io.File uploadPath = new java.io.File(uploadDir);
+        if (!uploadPath.exists()) {
+            boolean created = uploadPath.mkdirs();
+            if (!created) {
+                throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + uploadDir);
+            }
+            logger.info("업로드 디렉토리 생성됨: {}", uploadDir);
+        }
+        
+        // 파일명 생성 (중복 방지를 위해 타임스탬프 추가)
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        
+        String filename = System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString() + extension;
+        String filePath = uploadDir + filename;
+        
+        // 파일 저장
+        java.io.File dest = new java.io.File(filePath);
+        file.transferTo(dest);
+        
+        logger.info("파일 저장 완료: {}", filePath);
+        
+        // 웹에서 접근 가능한 URL 반환 (설정값 사용)
+        return urlPrefix + "/" + filename;
+    }
+
+    /**
+     * 파일과 함께 기존 게시대 정보를 업데이트합니다.
      *
      * @param id 업데이트할 게시대 ID
-     * @param standDetails 업데이트할 게시대 정보
+     * @param name 게시대 이름
+     * @param region 지역
+     * @param address 주소
+     * @param latitude 위도
+     * @param longitude 경도
+     * @param description 설명 (선택)
+     * @param image 새 이미지 파일 (선택)
      * @return 업데이트된 게시대
      */
-    @PutMapping("/{id}")
-    public ResponseEntity<Stand> updateStand(@PathVariable Long id, @RequestBody Stand standDetails) {
-        logger.info("PUT /api/stands/{} 요청 받음. 데이터: {}", id, standDetails);
-        Stand updatedStand = standService.updateStand(id, standDetails);
-        logger.info("게시대 업데이트 완료. ID: {}", updatedStand.getId());
-        return ResponseEntity.ok(updatedStand);
+    @PutMapping(value = "/{id}/with-file", consumes = "multipart/form-data")
+    public ResponseEntity<Stand> updateStandWithFile(
+            @PathVariable Long id,
+            @RequestParam("name") String name,
+            @RequestParam("region") String region,
+            @RequestParam("address") String address,
+            @RequestParam("latitude") Double latitude,
+            @RequestParam("longitude") Double longitude,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
+        
+        logger.info("PUT /api/stands/{}/with-file 요청 받음", id);
+        
+        try {
+            // 기존 게시대 정보 가져오기
+            Stand existingStand = standService.getStandById(id);
+            String oldImageUrl = existingStand.getImageUrl();
+            
+            // 게시대 정보 업데이트
+            Stand standDetails = Stand.builder()
+                    .name(name)
+                    .region(region)
+                    .address(address)
+                    .latitude(latitude)
+                    .longitude(longitude)
+                    .description(description)
+                    .imageUrl(oldImageUrl) // 기존 이미지 URL 유지
+                    .build();
+            
+            // 새 이미지 파일이 있으면 처리
+            if (image != null && !image.isEmpty()) {
+                // 기존 이미지 파일 삭제 (설정값 사용)
+                if (oldImageUrl != null && !oldImageUrl.isEmpty() && oldImageUrl.startsWith(urlPrefix + "/")) {
+                    deleteImageFile(oldImageUrl);
+                }
+                
+                // 새 이미지 파일 저장
+                String newImageUrl = saveImageFile(image);
+                standDetails.setImageUrl(newImageUrl);
+                logger.info("새 이미지 파일 저장 완료: {}", newImageUrl);
+            }
+            
+            Stand updatedStand = standService.updateStand(id, standDetails);
+            logger.info("게시대 업데이트 완료. ID: {}", updatedStand.getId());
+            return ResponseEntity.ok(updatedStand);
+            
+        } catch (Exception e) {
+            logger.error("파일 업데이트 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -132,9 +280,57 @@ public class StandApiController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStand(@PathVariable Long id) {
         logger.info("DELETE /api/stands/{} 요청 받음", id);
-        standService.deleteStand(id);
-        logger.info("게시대 삭제 완료. ID: {}", id);
-        return ResponseEntity.noContent().build();
+        
+        try {
+            // 삭제 전에 게시대 정보를 가져와서 이미지 파일 경로 확인
+            Stand stand = standService.getStandById(id);
+            String imageUrl = stand.getImageUrl();
+            
+            // 게시대 삭제
+            standService.deleteStand(id);
+            
+            // 이미지 파일이 있으면 삭제 (설정값 사용)
+            if (imageUrl != null && !imageUrl.isEmpty() && imageUrl.startsWith(urlPrefix + "/")) {
+                deleteImageFile(imageUrl);
+            }
+            
+            logger.info("게시대 삭제 완료. ID: {}", id);
+            return ResponseEntity.noContent().build();
+            
+        } catch (Exception e) {
+            logger.error("게시대 삭제 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 이미지 파일을 서버에서 삭제합니다.
+     *
+     * @param imageUrl 삭제할 이미지 URL
+     */
+    private void deleteImageFile(String imageUrl) {
+        try {
+            // URL에서 파일명 추출
+            if (imageUrl.startsWith(urlPrefix + "/")) {
+                String filename = imageUrl.substring((urlPrefix + "/").length());
+                String filePath = uploadDir + filename;
+                
+                java.io.File file = new java.io.File(filePath);
+                
+                if (file.exists()) {
+                    boolean deleted = file.delete();
+                    if (deleted) {
+                        logger.info("이미지 파일 삭제 완료: {}", filePath);
+                    } else {
+                        logger.warn("이미지 파일 삭제 실패: {}", filePath);
+                    }
+                } else {
+                    logger.warn("삭제할 이미지 파일이 존재하지 않음: {}", filePath);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("이미지 파일 삭제 중 오류 발생: {}", imageUrl, e);
+        }
     }
 
     /**

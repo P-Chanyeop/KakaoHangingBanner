@@ -98,6 +98,12 @@ function StandForm() {
     setSelectedMarker(null);
     setCoordsDisplay('지도를 클릭하여 위치를 선택하세요');
     setImagePreview(null);
+    
+    // 파일 입력 필드 초기화
+    const fileInput = document.getElementById('imageFile');
+    if (fileInput) {
+      fileInput.value = '';
+    }
 
     if (region && REGION_COORDS[region]) {
       const [lat, lng] = REGION_COORDS[region];
@@ -182,7 +188,34 @@ function StandForm() {
     };
 
     try {
-      await standsAPI.create(submitData);
+      if (formData.imageFile) {
+        // 파일이 있으면 FormData로 전송
+        const submitFormData = new FormData();
+        submitFormData.append('name', formData.name);
+        submitFormData.append('region', formData.region);
+        submitFormData.append('address', formData.address);
+        submitFormData.append('latitude', formData.latitude);
+        submitFormData.append('longitude', formData.longitude);
+        if (formData.description) {
+          submitFormData.append('description', formData.description);
+        }
+        submitFormData.append('image', formData.imageFile);
+        
+        await standsAPI.createWithFile(submitFormData);
+      } else {
+        // 파일이 없으면 JSON으로 전송
+        const submitData = {
+          name: formData.name,
+          region: formData.region,
+          address: formData.address,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          description: formData.description || null
+        };
+        
+        await standsAPI.create(submitData);
+      }
+      
       alert('게시대가 저장되었습니다.');
       
       // 폼 초기화 (페이지는 그대로 유지)
@@ -198,6 +231,12 @@ function StandForm() {
       setSelectedMarker(null);
       setCoordsDisplay('지도를 클릭하여 위치를 선택하세요');
       setImagePreview(null);
+      
+      // 파일 입력 필드 초기화
+      const fileInput = document.getElementById('imageFile');
+      if (fileInput) {
+        fileInput.value = '';
+      }
       
     } catch (error) {
       console.error('저장 오류:', error);
@@ -314,17 +353,24 @@ function StandForm() {
 
             <div className="form-group full-width">
               <label htmlFor="imageFile" className="form-label">게시대 이미지</label>
-              <input
-                type="file"
-                className="form-control"
-                id="imageFile"
-                name="imageFile"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
+              <div className="custom-file-upload">
+                <input
+                  type="file"
+                  className="file-input"
+                  id="imageFile"
+                  name="imageFile"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="imageFile" className="file-upload-btn">
+                  <i className="fas fa-camera" style={{ marginRight: '8px' }}></i>
+                  {formData.imageFile ? formData.imageFile.name : '이미지 선택'}
+                </label>
+              </div>
               <p className="help-text">게시대 사진을 업로드하세요 (최대 5MB, JPG/PNG/GIF 등)</p>
               {imagePreview && (
-                <div style={{ marginTop: '10px' }}>
+                <div style={{ marginTop: '10px', position: 'relative', display: 'inline-block' }}>
                   <img 
                     src={imagePreview} 
                     alt="미리보기" 
@@ -333,9 +379,39 @@ function StandForm() {
                       maxHeight: '150px', 
                       objectFit: 'cover', 
                       borderRadius: '4px',
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      display: 'block'
                     }} 
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, imageFile: null }));
+                      setImagePreview(null);
+                      document.getElementById('imageFile').value = '';
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '5px',
+                      right: '5px',
+                      width: '24px',
+                      height: '24px',
+                      padding: '0',
+                      backgroundColor: 'rgba(220, 53, 69, 0.9)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    title="이미지 삭제"
+                  >
+                    ×
+                  </button>
                 </div>
               )}
             </div>

@@ -42,6 +42,20 @@ export const standsAPI = {
     return response.json();
   },
 
+  // 파일과 함께 게시대 생성
+  createWithFile: async (formData) => {
+    const response = await fetch(`${API_BASE_URL}/stands/with-file`, {
+      method: 'POST',
+      body: formData // FormData는 Content-Type 헤더를 자동으로 설정
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('게시대 등록 실패:', response.status, errorText);
+      throw new Error(`게시대 등록에 실패했습니다. (${response.status})`);
+    }
+    return response.json();
+  },
+
   // 게시대 수정
   update: async (id, data) => {
     const response = await fetch(`${API_BASE_URL}/stands/${id}`, {

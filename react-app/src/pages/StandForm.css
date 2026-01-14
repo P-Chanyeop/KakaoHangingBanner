@@ -104,3 +104,40 @@ textarea.form-control {
         padding: 1.5rem;
     }
 }
+/* 커스텀 파일 업로드 버튼 */
+.custom-file-upload {
+  margin-bottom: 0.5rem;
+}
+
+.file-upload-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+  min-width: 160px;
+}
+
+.file-upload-btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+.file-upload-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.file-input {
+  display: none;
+}

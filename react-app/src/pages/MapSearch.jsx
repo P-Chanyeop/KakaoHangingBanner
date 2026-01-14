@@ -98,12 +98,16 @@ function MapSearch() {
     .filter(stand => stand.latitude && stand.longitude)
     .map(stand => {
       console.log('게시대 데이터:', stand); // 디버깅용
+      
+      // 이미지 URL 그대로 사용 (상대 경로)
+      const imageUrl = stand.imageUrl;
+      
       return {
         lat: stand.latitude,
         lng: stand.longitude,
         content: `
           <div style="min-width: 200px; max-width: 300px; padding: 10px; word-wrap: break-word;">
-            ${stand.imageUrl ? `<img src="${stand.imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none'">` : ''}
+            ${imageUrl ? `<img src="${imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none'; console.log('이미지 로드 실패:', this.src);">` : ''}
             <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue); font-size: 1rem; line-height: 1.3; word-break: break-word;">${stand.name}</h3>
             <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4; word-break: break-word;"><strong>주소:</strong> ${stand.address || '없음'}</p>
             <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4;"><strong>지역:</strong> ${stand.region || '없음'}</p>
