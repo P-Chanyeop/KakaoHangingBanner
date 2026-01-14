@@ -33,8 +33,8 @@ function Home() {
   const loadButtons = async () => {
     try {
       const allButtons = await buttonsAPI.getAll();
-      setOrangeButtons(allButtons.filter(btn => btn.color === 'orange'));
-      setGreenButtons(allButtons.filter(btn => btn.color === 'green'));
+      setOrangeButtons(allButtons.filter(btn => btn.type === 'orange' && btn.active));
+      setGreenButtons(allButtons.filter(btn => btn.type === 'green' && btn.active));
     } catch (error) {
       console.error('버튼 로드 실패:', error);
     }
