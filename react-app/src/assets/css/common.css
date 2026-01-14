@@ -83,6 +83,40 @@ body {
     background-color: var(--bg-gray-light);
 }
 
+.user-info {
+    color: var(--text-dark);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-gray-light);
+    border-radius: 0.5rem;
+}
+
+.user-info i {
+    color: var(--primary-blue);
+}
+
+.logout-btn {
+    background-color: transparent;
+    border: 2px solid var(--primary-blue);
+    color: var(--primary-blue);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logout-btn:hover {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
 /* 버튼 스타일 */
 .btn {
     display: inline-block;

@@ -8,12 +8,14 @@ const REGION_COORDS = {
   '경산시': [35.8250, 128.7414],
   '경주시': [35.8562, 129.2247],
   '고령군': [35.7273, 128.2623],
+  '구미시': [36.1195, 128.3445],
   '군위군': [36.2428, 128.5731],
   '김천시': [36.1399, 128.1138],
   '대구광역시': [35.8714, 128.6014],
   '문경시': [36.5864, 128.1867],
   '봉화군': [36.8930, 128.7324],
   '상주시': [36.4109, 128.1591],
+  '성주군': [35.9194, 128.2811],
   '안동시': [36.5684, 128.7294],
   '영덕군': [36.4150, 129.3655],
   '영양군': [36.6667, 129.1124],
@@ -292,7 +294,7 @@ function StandForm() {
 
             <div className="form-group full-width">
               <label htmlFor="address" className="form-label">
-                주소 <span className="required">*</span>
+                주소
               </label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
@@ -302,7 +304,7 @@ function StandForm() {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  required
+                  placeholder="주소를 입력하세요 (선택사항)"
                   style={{ flex: 1 }}
                 />
                 <button
@@ -314,7 +316,7 @@ function StandForm() {
                   <i className="fas fa-search"></i> 주소 검색
                 </button>
               </div>
-              <p className="help-text">게시대의 정확한 주소를 입력하고 '주소 검색' 버튼을 클릭하면 지도가 이동합니다</p>
+              <p className="help-text">주소를 입력하고 '주소 검색' 버튼을 클릭하면 지도가 이동합니다. 또는 지도를 직접 클릭하여 위치를 선택할 수 있습니다.</p>
             </div>
 
             <div className="form-group full-width">

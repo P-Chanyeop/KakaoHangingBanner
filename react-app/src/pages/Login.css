@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   padding: 2rem;
 }
 
@@ -31,7 +31,7 @@
 .login-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #667eea;
+  color: #2563eb;
   text-align: center;
   margin-bottom: 0.5rem;
 }
@@ -82,7 +82,7 @@
 }
 
 .form-group label i {
-  color: #667eea;
+  color: #2563eb;
   width: 16px;
 }
 
@@ -96,13 +96,13 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .login-button {
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -115,7 +115,7 @@
 
 .login-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
 }
 
 .login-button:disabled {
@@ -131,14 +131,14 @@
 }
 
 .login-footer a {
-  color: #667eea;
+  color: #2563eb;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .login-footer a:hover {
-  color: #764ba2;
+  color: #1e40af;
   text-decoration: underline;
 }
 
