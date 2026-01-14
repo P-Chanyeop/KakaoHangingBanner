@@ -527,4 +527,75 @@ public class StandApiController {
             
         return cleaned.trim();
     }
+
+    /**
+     * 좌표를 주소로 변환합니다 (역지오코딩).
+     *
+     * @param lat 위도
+     * @param lng 경도
+     * @return 주소 정보
+     */
+    @GetMapping("/reverse-geocode")
+    public ResponseEntity<Map<String, Object>> reverseGeocode(
+            @RequestParam Double lat,
+            @RequestParam Double lng) {
+        
+        logger.info("GET /api/stands/reverse-geocode 요청 받음. lat={}, lng={}", lat, lng);
+
+        try {
+            String apiKey = "27CEA50A-6F66-37A6-8D0D-D9F306F30994";
+            String apiUrl = String.format(
+                "https://api.vworld.kr/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&point=%s,%s&format=json&type=both&zipcode=false&simple=false&key=%s",
+                lng, lat, apiKey
+            );
+
+            logger.info("VWorld 역지오코딩 API 호출: {}", apiUrl);
+
+            java.net.URL url = new java.net.URL(apiUrl);
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(url.openStream(), java.nio.charset.StandardCharsets.UTF_8)
+            );
+            
+            org.json.simple.parser.JSONParser jspa = new org.json.simple.parser.JSONParser();
+            org.json.simple.JSONObject jsob = (org.json.simple.JSONObject) jspa.parse(reader);
+            org.json.simple.JSONObject jsrs = (org.json.simple.JSONObject) jsob.get("response");
+            
+            logger.info("VWorld 역지오코딩 응답: {}", jsob.toString());
+            
+            String status = (String) jsrs.get("status");
+            
+            if ("OK".equals(status)) {
+                org.json.simple.JSONArray result = (org.json.simple.JSONArray) jsrs.get("result");
+                
+                if (result != null && !result.isEmpty()) {
+                    org.json.simple.JSONObject item = (org.json.simple.JSONObject) result.get(0);
+                    
+                    String address = (String) item.get("text");
+                    String type = (String) item.get("type");
+                    org.json.simple.JSONObject structure = (org.json.simple.JSONObject) item.get("structure");
+                    
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("address", address);
+                    response.put("type", type);
+                    response.put("structure", structure);
+                    
+                    logger.info("역지오코딩 성공: {}", address);
+                    return ResponseEntity.ok(response);
+                }
+            }
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "주소를 찾을 수 없습니다.");
+            return ResponseEntity.status(404).body(errorResponse);
+
+        } catch (Exception e) {
+            logger.error("역지오코딩 처리 중 오류 발생", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "서버 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
 }

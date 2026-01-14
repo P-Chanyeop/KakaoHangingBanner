@@ -146,6 +146,15 @@ export const standsAPI = {
     });
     if (!response.ok) throw new Error('주소 변환에 실패했습니다.');
     return response.json();
+  },
+
+  // 좌표를 주소로 변환 (Reverse Geocoding)
+  reverseGeocode: async (lat, lng) => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/stands/reverse-geocode?lat=${lat}&lng=${lng}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('좌표 변환에 실패했습니다.');
+    return response.json();
   }
 };
 
