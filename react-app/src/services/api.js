@@ -1,5 +1,8 @@
 // API 기본 URL
-const API_BASE_URL = 'http://localhost:8081/api';
+// 개발 환경에서는 프록시를 통해, 프로덕션에서는 상대 경로 사용
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : 'http://localhost:8081/api';
 
 // 게시대 관련 API
 export const standsAPI = {

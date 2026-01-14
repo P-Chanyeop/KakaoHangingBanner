@@ -39,17 +39,21 @@ out/
 ### React / Node.js ###
 # dependencies
 node_modules/
+react-app/node_modules/
 frontend/node_modules/
 /.pnp
 .pnp.js
 
 # testing
 /coverage
+react-app/coverage/
 frontend/coverage/
 
 # production
 /build
+react-app/build/
 frontend/build/
+src/main/resources/static/
 
 # misc
 .DS_Store
