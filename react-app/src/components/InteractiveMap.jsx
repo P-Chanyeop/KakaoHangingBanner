@@ -105,6 +105,11 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
     // 허용된 지역들의 전체 경계 박스 계산
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
+    // 이미 라벨이 추가된 지역명 추적 (대구광역시 중복 방지)
+    const addedLabels = new Set();
+    // 대구광역시의 모든 구 경계 박스 수집
+    const daeguBoundingBoxes = [];
+
     paths.forEach(path => {
       const svgRegionName = path.id;
 
@@ -128,6 +133,11 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
           minY = Math.min(minY, bbox.y);
           maxX = Math.max(maxX, bbox.x + bbox.width);
           maxY = Math.max(maxY, bbox.y + bbox.height);
+
+          // 대구광역시 구들의 경계 박스 수집
+          if (regionName === '대구광역시') {
+            daeguBoundingBoxes.push(bbox);
+          }
         } catch (error) {
           // getBBox 실패 시 무시
         }
@@ -169,28 +179,32 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         // 이벤트 리스너 저장 (클린업용)
         path._listeners = { handleMouseEnter, handleMouseLeave, handleClick };
 
-        // 라벨 추가 (허용된 지역만)
-        try {
-          const bbox = path.getBBox();
-          const centerX = bbox.x + bbox.width / 2;
-          const centerY = bbox.y + bbox.height / 2;
+        // 라벨 추가 (허용된 지역만, 중복 방지)
+        // 대구광역시는 나중에 한 번만 추가
+        if (regionName !== '대구광역시' && !addedLabels.has(regionName)) {
+          try {
+            const bbox = path.getBBox();
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
 
-          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          label.setAttribute('x', centerX);
-          label.setAttribute('y', centerY);
-          label.setAttribute('text-anchor', 'middle');
-          label.setAttribute('dominant-baseline', 'middle');
-          label.setAttribute('class', 'region-label');
-          label.setAttribute('pointer-events', 'none');
-          label.style.fontSize = '12px';
-          label.style.fontWeight = 'bold';
-          label.style.fill = '#333';
-          label.style.userSelect = 'none';
-          label.textContent = regionName;
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', centerX);
+            label.setAttribute('y', centerY);
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dominant-baseline', 'middle');
+            label.setAttribute('class', 'region-label');
+            label.setAttribute('pointer-events', 'none');
+            label.style.fontSize = '12px';
+            label.style.fontWeight = 'bold';
+            label.style.fill = '#333';
+            label.style.userSelect = 'none';
+            label.textContent = regionName;
 
-          svgElement.appendChild(label);
-        } catch (error) {
-          console.error(`라벨 추가 실패 (${regionName}):`, error);
+            svgElement.appendChild(label);
+            addedLabels.add(regionName);
+          } catch (error) {
+            console.error(`라벨 추가 실패 (${regionName}):`, error);
+          }
         }
       } else {
         // 허용되지 않은 지역은 회색으로 표시하고 클릭 불가
@@ -201,6 +215,38 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         path.style.opacity = '0.5';
       }
     });
+
+    // 대구광역시 라벨 추가 (모든 구의 중앙에 한 번만)
+    if (daeguBoundingBoxes.length > 0) {
+      try {
+        // 모든 대구 구들의 중심점 계산
+        let totalCenterX = 0;
+        let totalCenterY = 0;
+        daeguBoundingBoxes.forEach(bbox => {
+          totalCenterX += bbox.x + bbox.width / 2;
+          totalCenterY += bbox.y + bbox.height / 2;
+        });
+        const avgCenterX = totalCenterX / daeguBoundingBoxes.length;
+        const avgCenterY = totalCenterY / daeguBoundingBoxes.length;
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', avgCenterX);
+        label.setAttribute('y', avgCenterY);
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('dominant-baseline', 'middle');
+        label.setAttribute('class', 'region-label');
+        label.setAttribute('pointer-events', 'none');
+        label.style.fontSize = '12px';
+        label.style.fontWeight = 'bold';
+        label.style.fill = '#333';
+        label.style.userSelect = 'none';
+        label.textContent = '대구광역시';
+
+        svgElement.appendChild(label);
+      } catch (error) {
+        console.error('대구광역시 라벨 추가 실패:', error);
+      }
+    }
 
     // 허용된 지역들만 보이도록 viewBox 조정
     if (svgElement && minX !== Infinity) {
