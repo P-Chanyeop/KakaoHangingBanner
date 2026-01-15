@@ -62,9 +62,14 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
     const paths = svgContainerRef.current.querySelectorAll('path[id]');
     const svgElement = svgContainerRef.current.querySelector('svg');
 
-    // 기존 라벨 제거
+    // 기존 라벨 및 대구 circle 제거
     const existingLabels = svgContainerRef.current.querySelectorAll('.region-label');
     existingLabels.forEach(label => label.remove());
+
+    const existingDaeguCircle = svgContainerRef.current.querySelector('circle#대구광역시');
+    if (existingDaeguCircle) {
+      existingDaeguCircle.remove();
+    }
 
     // 허용된 지역들의 전체 경계 박스 계산
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
