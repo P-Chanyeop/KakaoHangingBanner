@@ -68,3 +68,35 @@
 .popup-close:hover {
   color: #000;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .interactive-map-container {
+    padding: 15px 0;
+  }
+
+  .interactive-map-container h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .map-wrapper {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .popup-overlay {
+    z-index: 9999;
+    padding: 1rem;
+  }
+
+  .popup-content {
+    width: 95%;
+    max-width: none;
+    padding: 1.5rem;
+  }
+
+  .popup-close {
+    font-size: 1.8rem;
+  }
+}
