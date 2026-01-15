@@ -286,12 +286,12 @@ function StandForm() {
   };
 
   return (
-    <main>
-      <div className="form-container">
-        <h2 className="form-title">새 게시대 등록</h2>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-grid">
+    <main className="stand-form-main">
+      <div className="stand-form-horizontal">
+        {/* 왼쪽: 폼 */}
+        <div className="stand-form-left">
+          <h2 className="form-title">새 게시대 등록</h2>
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="name" className="form-label">
                 게시대 이름 <span className="required">*</span>
@@ -331,13 +331,10 @@ function StandForm() {
                   ))}
                 </optgroup>
               </select>
-              <p className="help-text">지역을 선택하면 지도가 해당 지역으로 이동합니다</p>
             </div>
 
-            <div className="form-group full-width">
-              <label htmlFor="address" className="form-label">
-                주소
-              </label>
+            <div className="form-group">
+              <label htmlFor="address" className="form-label">주소</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
                   type="text"
@@ -346,44 +343,25 @@ function StandForm() {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  placeholder="주소를 입력하세요 (선택사항)"
+                  placeholder="주소 입력"
                   style={{ flex: 1 }}
                 />
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={searchAddress}
-                  style={{ whiteSpace: 'nowrap' }}
+                  style={{ whiteSpace: 'nowrap', padding: '0.5rem 1rem' }}
                 >
-                  <i className="fas fa-search"></i> 주소 검색
+                  <i className="fas fa-search"></i>
                 </button>
               </div>
-              <p className="help-text">주소를 입력하고 '주소 검색' 버튼을 클릭하면 지도가 이동합니다. 또는 지도를 직접 클릭하여 위치를 선택할 수 있습니다.</p>
             </div>
 
-            <div className="form-group full-width">
-              <label className="form-label">
-                위치 선택 <span className="required">*</span>
-              </label>
-              <div className="stand-form-map">
-                <UnifiedMap
-                  center={mapCenter}
-                  zoom={mapZoom}
-                  markers={selectedMarker ? [selectedMarker] : []}
-                  onMapClick={handleMapClick}
-                  showTabs={true}
-                  defaultProvider="naver"
-                  autoFitBounds={false}
-                  roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </div>
-              <div className="coordinates-display">
-                선택된 좌표: <span className="coordinates-value">{coordsDisplay}</span>
-              </div>
+            <div className="coordinates-display">
+              좌표: <span className="coordinates-value">{coordsDisplay}</span>
             </div>
 
-            <div className="form-group full-width">
+            <div className="form-group">
               <label htmlFor="description" className="form-label">설명</label>
               <textarea
                 className="form-control"
@@ -391,12 +369,13 @@ function StandForm() {
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="게시대에 대한 추가 정보를 입력하세요 (선택사항)"
+                placeholder="추가 정보 (선택사항)"
+                rows="3"
               />
             </div>
 
-            <div className="form-group full-width">
-              <label htmlFor="imageFile" className="form-label">게시대 이미지</label>
+            <div className="form-group">
+              <label htmlFor="imageFile" className="form-label">이미지</label>
               <div className="custom-file-upload">
                 <input
                   type="file"
@@ -412,20 +391,12 @@ function StandForm() {
                   {formData.imageFile ? formData.imageFile.name : '이미지 선택'}
                 </label>
               </div>
-              <p className="help-text">게시대 사진을 업로드하세요 (최대 5MB, JPG/PNG/GIF 등)</p>
               {imagePreview && (
                 <div style={{ marginTop: '10px', position: 'relative', display: 'inline-block' }}>
                   <img 
                     src={imagePreview} 
                     alt="미리보기" 
-                    style={{ 
-                      maxWidth: '200px', 
-                      maxHeight: '150px', 
-                      objectFit: 'cover', 
-                      borderRadius: '4px',
-                      border: '1px solid #ddd',
-                      display: 'block'
-                    }} 
+                    style={{ maxWidth: '150px', maxHeight: '100px', objectFit: 'cover', borderRadius: '4px' }} 
                   />
                   <button
                     type="button"
@@ -435,41 +406,37 @@ function StandForm() {
                       document.getElementById('imageFile').value = '';
                     }}
                     style={{
-                      position: 'absolute',
-                      top: '5px',
-                      right: '5px',
-                      width: '24px',
-                      height: '24px',
-                      padding: '0',
-                      backgroundColor: 'rgba(220, 53, 69, 0.9)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      position: 'absolute', top: '5px', right: '5px',
+                      width: '20px', height: '20px', padding: '0',
+                      backgroundColor: 'rgba(220, 53, 69, 0.9)', color: 'white',
+                      border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '12px'
                     }}
-                    title="이미지 삭제"
-                  >
-                    ×
-                  </button>
+                  >×</button>
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="form-actions">
-            <button type="button" className="btn btn-outline" onClick={handleCancel}>
-              취소
-            </button>
-            <button type="submit" className="btn btn-primary">
-              등록하기
-            </button>
-          </div>
-        </form>
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={handleCancel}>취소</button>
+              <button type="submit" className="btn btn-primary">등록</button>
+            </div>
+          </form>
+        </div>
+
+        {/* 오른쪽: 지도 */}
+        <div className="stand-form-right">
+          <UnifiedMap
+            center={mapCenter}
+            zoom={mapZoom}
+            markers={selectedMarker ? [selectedMarker] : []}
+            onMapClick={handleMapClick}
+            showTabs={true}
+            defaultProvider="naver"
+            autoFitBounds={false}
+            roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
       </div>
     </main>
   );

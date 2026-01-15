@@ -84,7 +84,9 @@ function MapSearch() {
     region: '',
     address: '',
     description: '',
-    imageFile: null
+    imageFile: null,
+    latitude: 0,
+    longitude: 0
   });
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -190,7 +192,9 @@ function MapSearch() {
       region: stand.region || '',
       address: stand.address || '',
       description: stand.description || '',
-      imageFile: null
+      imageFile: null,
+      latitude: stand.latitude,
+      longitude: stand.longitude
     });
     setImagePreview(stand.imageUrl || null);
     setShowEditModal(true);

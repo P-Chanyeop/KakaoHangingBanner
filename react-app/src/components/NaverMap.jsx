@@ -248,9 +248,11 @@ function NaverMap({
       setIsRoadviewOpen(newState);
 
       if (newState) {
-        // 로드뷰 열기
-        const currentCenter = mapInstance.current.getCenter();
-        panoInstance.current.setPosition(currentCenter);
+        // 로드뷰 열기 - roadviewTarget이 있으면 그 위치, 없으면 지도 중심
+        const targetPosition = roadviewTarget 
+          ? new window.naver.maps.LatLng(roadviewTarget.lat, roadviewTarget.lng)
+          : mapInstance.current.getCenter();
+        panoInstance.current.setPosition(targetPosition);
         panoInstance.current.setVisible(true);
       } else {
         // 로드뷰 닫기
