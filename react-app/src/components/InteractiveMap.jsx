@@ -192,9 +192,9 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
     // 경상북도인 경우 대구광역시를 수동으로 추가
     if (region === 'gyeongbuk' && gyeongsanCenter && chilgokCenter) {
       try {
-        // 대구 위치: 경산시와 칠곡군 사이 (약간 서쪽)
-        const daeguX = (gyeongsanCenter.x + chilgokCenter.x) / 2 - 20;
-        const daeguY = (gyeongsanCenter.y + chilgokCenter.y) / 2;
+        // 대구 위치: 지도 오른쪽에 별도로 배치
+        const daeguX = maxX + 60; // 지도 오른쪽에서 60px 떨어진 위치
+        const daeguY = (minY + maxY) / 2; // 지도 세로 중앙
         const daeguRadius = 25;
 
         // 대구를 표현하는 원형 path 생성
@@ -250,6 +250,9 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         daeguLabel.textContent = '대구';
 
         svgElement.appendChild(daeguLabel);
+
+        // viewBox 계산 시 대구 영역 포함
+        maxX = Math.max(maxX, daeguX + daeguRadius);
       } catch (error) {
         console.error('대구광역시 추가 실패:', error);
       }
