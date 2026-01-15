@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import './NaverMap.css';
 
 function NaverMap({
   center = { lat: 36.5, lng: 127.5 },
@@ -10,9 +9,7 @@ function NaverMap({
   showRoadview = true,
   autoFitBounds = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
-  roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
-  showPermanentLabels = false, // 상시 라벨 표시 여부
-  sidebarCollapsed = true // 사이드바 상태 (모바일에서 버튼 가시성 제어)
+  roadviewTarget = null // 로드뷰를 보여줄 특정 좌표 (핀 위치)
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -172,28 +169,12 @@ function NaverMap({
 
       // 인포윈도우 추가
       if (markerData.content) {
-        // 제목 추출 (h3 태그 내용)
-        const titleMatch = markerData.content.match(/<h3[^>]*>(.*?)<\/h3>/);
-        const title = titleMatch ? titleMatch[1] : '';
-        
         const infowindow = new window.naver.maps.InfoWindow({
           content: `<div style="padding:15px; min-width:200px; max-width:300px;">
             ${markerData.content}
           </div>`,
           pixelOffset: new window.naver.maps.Point(0, -10)
         });
-
-        // 상시 라벨 표시
-        if (showPermanentLabels && title) {
-          const labelWindow = new window.naver.maps.InfoWindow({
-            content: `<div style="padding: 5px 10px; background: white; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-weight: bold; white-space: nowrap;">${title}</div>`,
-            pixelOffset: new window.naver.maps.Point(0, -35),
-            borderWidth: 0,
-            disableAnchor: true,
-            backgroundColor: 'transparent'
-          });
-          labelWindow.open(mapInstance.current, marker);
-        }
 
         window.naver.maps.Event.addListener(marker, 'click', function() {
           if (infowindow.getMap()) {
@@ -361,7 +342,6 @@ function NaverMap({
       {showRoadview && (
         <button
           type="button"
-          className={`naver-roadview-btn ${sidebarCollapsed ? '' : 'roadview-btn-hidden-mobile'}`}
           onClick={toggleRoadview}
           disabled={!roadviewAvailable && isRoadviewOpen}
           style={{
@@ -395,22 +375,12 @@ function NaverMap({
             e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
           }}
         >
-          <span className="roadview-icon">
-            {roadviewMode === 'selector'
-              ? (isSelectingRoadview
-                  ? (isRoadviewOpen ? '🗺️' : '🚫')
-                  : '👁️')
-              : (isRoadviewOpen ? '🗺️' : '👁️')
-            }
-          </span>
-          <span className="roadview-text">
-            {roadviewMode === 'selector'
-              ? (isSelectingRoadview
-                  ? (isRoadviewOpen ? ' 지도 보기' : ' 선택 취소')
-                  : ' 로드뷰 선택')
-              : (isRoadviewOpen ? ' 지도 보기' : ' 로드뷰')
-            }
-          </span>
+          {roadviewMode === 'selector'
+            ? (isSelectingRoadview
+                ? (isRoadviewOpen ? '🗺️ 지도 보기' : '🚫 선택 취소')
+                : '👁️ 로드뷰 선택')
+            : (isRoadviewOpen ? '🗺️ 지도 보기' : '👁️ 로드뷰')
+          }
         </button>
       )}
 

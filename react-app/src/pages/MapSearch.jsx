@@ -361,8 +361,6 @@ function MapSearch() {
             defaultProvider="kakao"
             autoFitBounds={false}
             roadviewMode="selector"
-            showPermanentLabels={true}
-            sidebarCollapsed={sidebarCollapsed}
             style={{ width: '100%', height: '100%' }}
           />
         </div>

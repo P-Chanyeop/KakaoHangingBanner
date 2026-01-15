@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import './KakaoMap.css';
 
 function KakaoMap({
   center = { lat: 36.5, lng: 127.5 },
@@ -9,9 +8,7 @@ function KakaoMap({
   style = { width: '100%', height: '100%' },
   showRoadview = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
-  roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
-  showPermanentLabels = false, // 상시 라벨 표시 여부
-  sidebarCollapsed = true // 사이드바 상태 (모바일에서 버튼 가시성 제어)
+  roadviewTarget = null // 로드뷰를 보여줄 특정 좌표 (핀 위치)
 }) {
   const mapRef = useRef(null);
   const roadviewRef = useRef(null);
@@ -154,22 +151,9 @@ function KakaoMap({
 
       // 인포윈도우 추가
       if (markerData.content) {
-        // 제목 추출 (h3 태그 내용)
-        const titleMatch = markerData.content.match(/<h3[^>]*>(.*?)<\/h3>/);
-        const title = titleMatch ? titleMatch[1] : '';
-        
         const infowindow = new window.kakao.maps.InfoWindow({
           content: `<div style="width: 280px; max-width: 280px; overflow: hidden; padding: 15px;">${markerData.content}</div>`
         });
-
-        // 상시 라벨 표시
-        if (showPermanentLabels && title) {
-          const labelWindow = new window.kakao.maps.InfoWindow({
-            content: `<div style="padding: 5px 10px; background: white; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-weight: bold; white-space: nowrap;">${title}</div>`,
-            removable: false
-          });
-          labelWindow.open(mapInstance.current, marker);
-        }
 
         window.kakao.maps.event.addListener(marker, 'click', function() {
           if (infowindow.getMap()) {
@@ -184,7 +168,7 @@ function KakaoMap({
 
       markersRef.current.push(marker);
     });
-  }, [markers, showPermanentLabels]);
+  }, [markers]);
 
   // 로드뷰 열기 함수
   const openRoadviewAt = (coords) => {
@@ -276,7 +260,6 @@ function KakaoMap({
       {showRoadview && (
         <button
           type="button"
-          className={`kakao-roadview-btn ${sidebarCollapsed ? '' : 'roadview-btn-hidden-mobile'}`}
           onClick={toggleRoadview}
           disabled={!roadviewAvailable && isRoadviewOpen}
           style={{
@@ -310,22 +293,12 @@ function KakaoMap({
             e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
           }}
         >
-          <span className="roadview-icon">
-            {roadviewMode === 'selector'
-              ? (isRoadviewOpen
-                  ? '🗺️'
-                  : (isSelectingRoadview ? '🚫' : '👁️'))
-              : (isRoadviewOpen ? '🗺️' : '👁️')
-            }
-          </span>
-          <span className="roadview-text">
-            {roadviewMode === 'selector'
-              ? (isRoadviewOpen
-                  ? ' 지도 보기'
-                  : (isSelectingRoadview ? ' 선택 취소' : ' 로드뷰 선택'))
-              : (isRoadviewOpen ? ' 지도 보기' : ' 로드뷰')
-            }
-          </span>
+          {roadviewMode === 'selector'
+            ? (isRoadviewOpen 
+                ? '🗺️ 지도 보기'
+                : (isSelectingRoadview ? '🚫 선택 취소' : '👁️ 로드뷰 선택'))
+            : (isRoadviewOpen ? '🗺️ 지도 보기' : '👁️ 로드뷰')
+          }
         </button>
       )}
 

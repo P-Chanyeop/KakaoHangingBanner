@@ -23,9 +23,7 @@ function UnifiedMap({
   defaultProvider = 'kakao',
   autoFitBounds = true,
   roadviewMode = 'toggle',
-  roadviewTarget = null, // 로드뷰 대상 좌표
-  showPermanentLabels = false, // 상시 라벨 표시 여부
-  sidebarCollapsed = true // 사이드바 상태 (모바일에서 버튼 가시성 제어)
+  roadviewTarget = null // 로드뷰 대상 좌표
 }) {
   const [mapProvider, setMapProvider] = useState(defaultProvider);
   const leafletMapRef = useRef(null);
@@ -124,20 +122,16 @@ function UnifiedMap({
   return (
     <div style={{ position: 'relative', ...style }}>
       {showTabs && (
-        <div
-          className={sidebarCollapsed ? '' : 'map-tabs-hidden-mobile'}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1000
-          }}
-        >
+        <div style={{
+          position: 'absolute',
+          top: '1rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000
+        }}>
           <MapTabs
             activeProvider={mapProvider}
             onProviderChange={setMapProvider}
-            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
       )}
@@ -156,8 +150,6 @@ function UnifiedMap({
           showRoadview={true}
           roadviewMode={roadviewMode}
           roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
-          showPermanentLabels={showPermanentLabels}
-          sidebarCollapsed={sidebarCollapsed}
         />
       )}
 
@@ -171,8 +163,6 @@ function UnifiedMap({
           autoFitBounds={autoFitBounds}
           roadviewMode={roadviewMode}
           roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
-          showPermanentLabels={showPermanentLabels}
-          sidebarCollapsed={sidebarCollapsed}
         />
       )}
     </div>
