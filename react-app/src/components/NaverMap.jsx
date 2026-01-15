@@ -11,7 +11,8 @@ function NaverMap({
   autoFitBounds = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
   roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
-  showPermanentLabels = false // 상시 라벨 표시 여부
+  showPermanentLabels = false, // 상시 라벨 표시 여부
+  sidebarCollapsed = true // 사이드바 상태 (모바일에서 버튼 가시성 제어)
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -360,7 +361,7 @@ function NaverMap({
       {showRoadview && (
         <button
           type="button"
-          className="naver-roadview-btn"
+          className={`naver-roadview-btn ${sidebarCollapsed ? '' : 'roadview-btn-hidden-mobile'}`}
           onClick={toggleRoadview}
           disabled={!roadviewAvailable && isRoadviewOpen}
           style={{
