@@ -91,12 +91,27 @@
   }
 
   .popup-content {
-    width: 95%;
+    width: 90%;
     max-width: none;
-    padding: 1.5rem;
+    padding: 1.25rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .popup-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    word-break: keep-all;
+  }
+
+  .popup-content p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-break: keep-all;
   }
 
   .popup-close {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+    padding: 0.25rem;
   }
 }
