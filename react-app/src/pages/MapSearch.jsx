@@ -103,18 +103,23 @@ function MapSearch() {
   };
 
   const handleSearch = async () => {
-    if (!searchKeyword.trim()) {
-      setFilteredStands(stands);
-      return;
+    let results = stands;
+    
+    // 지역 필터링
+    if (selectedRegion) {
+      results = results.filter(stand => stand.region === selectedRegion);
     }
-
-    try {
-      const results = await standsAPI.search(searchKeyword);
-      setFilteredStands(results);
-    } catch (error) {
-      console.error('검색 실패:', error);
-      alert('검색 중 오류가 발생했습니다.');
+    
+    // 키워드 검색
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.toLowerCase();
+      results = results.filter(stand => 
+        (stand.name && stand.name.toLowerCase().includes(keyword)) ||
+        (stand.address && stand.address.toLowerCase().includes(keyword))
+      );
     }
+    
+    setFilteredStands(results);
   };
 
   const handleKeyPress = (e) => {
@@ -131,7 +136,43 @@ function MapSearch() {
       const [lat, lng] = REGION_COORDS[region];
       setMapCenter({ lat, lng });
       setMapZoom(13);
+      // 지역 선택 시 해당 지역 게시대만 필터링
+      setFilteredStands(stands.filter(stand => stand.region === region));
+    } else {
+      // 지역 선택 해제 시 전체 표시
+      setFilteredStands(stands);
     }
+  };
+
+  // 엑셀 다운로드
+  const exportToExcel = () => {
+    if (filteredStands.length === 0) {
+      alert('다운로드할 게시대가 없습니다.');
+      return;
+    }
+
+    const headers = ['이름', '지역', '주소', '위도', '경도', '설명'];
+    const rows = filteredStands.map(stand => [
+      stand.name || '',
+      stand.region || '',
+      stand.address || '',
+      stand.latitude || '',
+      stand.longitude || '',
+      stand.description || ''
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `게시대목록_${selectedRegion || '전체'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const focusStand = (stand) => {
@@ -338,6 +379,20 @@ function MapSearch() {
             <span className="map-search-stats-text">
               총 <span className="map-search-stats-number">{filteredStands.length}</span>개의 게시대
             </span>
+            <button
+              onClick={exportToExcel}
+              style={{
+                padding: '0.4rem 0.8rem',
+                fontSize: '0.85rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              <i className="fas fa-file-excel"></i> 엑셀
+            </button>
           </div>
         </aside>
 
@@ -358,9 +413,10 @@ function MapSearch() {
             markers={mapMarkers}
             onMapClick={() => {}}
             showTabs={true}
-            defaultProvider="kakao"
+            defaultProvider="naver"
             autoFitBounds={false}
             roadviewMode="selector"
+            tabPosition="bottom-right"
             style={{ width: '100%', height: '100%' }}
           />
         </div>

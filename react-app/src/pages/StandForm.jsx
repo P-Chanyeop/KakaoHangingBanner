@@ -372,7 +372,7 @@ function StandForm() {
                   markers={selectedMarker ? [selectedMarker] : []}
                   onMapClick={handleMapClick}
                   showTabs={true}
-                  defaultProvider="kakao"
+                  defaultProvider="naver"
                   autoFitBounds={false}
                   roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
                   style={{ width: '100%', height: '100%' }}

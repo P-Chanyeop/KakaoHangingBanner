@@ -23,7 +23,8 @@ function UnifiedMap({
   defaultProvider = 'kakao',
   autoFitBounds = true,
   roadviewMode = 'toggle',
-  roadviewTarget = null // 로드뷰 대상 좌표
+  roadviewTarget = null, // 로드뷰 대상 좌표
+  tabPosition = 'top-center' // 탭 위치: 'top-center' or 'bottom-right'
 }) {
   const [mapProvider, setMapProvider] = useState(defaultProvider);
   const leafletMapRef = useRef(null);
@@ -124,9 +125,10 @@ function UnifiedMap({
       {showTabs && (
         <div style={{
           position: 'absolute',
-          top: '1rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          ...(tabPosition === 'bottom-right' 
+            ? { bottom: '1rem', right: '1rem' }
+            : { top: '1rem', left: '50%', transform: 'translateX(-50%)' }
+          ),
           zIndex: 1000
         }}>
           <MapTabs
