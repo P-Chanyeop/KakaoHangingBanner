@@ -6,13 +6,22 @@ const GYEONGBUK_REGIONS = [
   '경산시', '경주시', '고령군', '구미시', '군위군', '김천시',
   '문경시', '봉화군', '상주시', '성주군', '안동시', '영덕군',
   '영양군', '영주시', '영천시', '예천군', '울진군', '의성군',
-  '청도군', '청송군', '칠곡군', '포항시'
+  '청도군', '청송군', '칠곡군', '포항시', '대구광역시'
 ];
 
 // SVG 지역명 매핑 (SVG의 지역명 → 실제 지역명)
 const REGION_NAME_MAP = {
   '포항시 남구': '포항시',
-  '포항시 북구': '포항시'
+  '포항시 북구': '포항시',
+  // 대구광역시 구들을 모두 "대구광역시"로 매핑
+  '남구': '대구광역시',
+  '달서구': '대구광역시',
+  '달성군': '대구광역시',
+  '동구': '대구광역시',
+  '북구': '대구광역시',
+  '서구': '대구광역시',
+  '수성구': '대구광역시',
+  '중구': '대구광역시'
 };
 
 // 경남 지역 (MapSearch.jsx와 동일)
@@ -35,14 +44,48 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
 
   useEffect(() => {
     // SVG 파일 로드
-    const svgFile = region === 'gyeongbuk'
-      ? '/static/경상북도_시군구.svg'
-      : '/static/경상남도_시군구.svg';
+    const loadSVGs = async () => {
+      try {
+        if (region === 'gyeongbuk') {
+          // 경상북도와 대구광역시 SVG 모두 로드
+          const [gyeongbukResponse, daeguResponse] = await Promise.all([
+            fetch('/static/경상북도_시군구.svg'),
+            fetch('/static/대구광역시_시군구.svg')
+          ]);
 
-    fetch(svgFile)
-      .then(response => response.text())
-      .then(text => setSvgContent(text))
-      .catch(error => console.error('SVG 로드 실패:', error));
+          const gyeongbukText = await gyeongbukResponse.text();
+          const daeguText = await daeguResponse.text();
+
+          // 두 SVG를 합치기
+          const parser = new DOMParser();
+          const gyeongbukDoc = parser.parseFromString(gyeongbukText, 'image/svg+xml');
+          const daeguDoc = parser.parseFromString(daeguText, 'image/svg+xml');
+
+          const gyeongbukSvg = gyeongbukDoc.querySelector('svg');
+          const daeguSvg = daeguDoc.querySelector('svg');
+
+          // 대구 SVG의 모든 path를 경북 SVG에 추가
+          const daeguPaths = daeguSvg.querySelectorAll('path[id]');
+          daeguPaths.forEach(path => {
+            gyeongbukSvg.appendChild(path.cloneNode(true));
+          });
+
+          // 합쳐진 SVG를 문자열로 변환
+          const serializer = new XMLSerializer();
+          const combinedSvg = serializer.serializeToString(gyeongbukSvg);
+          setSvgContent(combinedSvg);
+        } else {
+          // 경남은 기존 방식 그대로
+          const response = await fetch('/static/경상남도_시군구.svg');
+          const text = await response.text();
+          setSvgContent(text);
+        }
+      } catch (error) {
+        console.error('SVG 로드 실패:', error);
+      }
+    };
+
+    loadSVGs();
   }, [region]);
 
   useEffect(() => {
