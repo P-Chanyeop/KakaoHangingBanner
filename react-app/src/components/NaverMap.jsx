@@ -170,7 +170,8 @@ function NaverMap({
       const marker = new window.naver.maps.Marker({
         position: position,
         map: mapInstance.current,
-        title: markerData.title || `마커 ${index + 1}`
+        title: markerData.title || `마커 ${index + 1}`,
+        zIndex: 100
       });
 
       // 상시 라벨 (CustomOverlay)
@@ -217,10 +218,13 @@ function NaverMap({
       // 인포윈도우 추가
       if (markerData.content) {
         const infowindow = new window.naver.maps.InfoWindow({
-          content: `<div style="padding:15px; min-width:200px; max-width:300px;">
+          content: `<div style="padding:15px; min-width:200px; max-width:300px; background:white; border-radius:8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
             ${markerData.content}
           </div>`,
-          pixelOffset: new window.naver.maps.Point(0, -10)
+          borderWidth: 0,
+          backgroundColor: 'transparent',
+          anchorSize: new window.naver.maps.Size(0, 0),
+          pixelOffset: new window.naver.maps.Point(20, -150)
         });
 
         window.naver.maps.Event.addListener(marker, 'click', function() {
@@ -228,13 +232,6 @@ function NaverMap({
             infowindow.close();
           } else {
             infowindow.open(mapInstance.current, marker);
-            // 인포윈도우가 열릴 때 지도 중심을 약간 위로 이동
-            const markerPosition = marker.getPosition();
-            const projection = mapInstance.current.getProjection();
-            const point = projection.fromCoordToOffset(markerPosition);
-            point.y -= 150; // 150px 위로 이동
-            const newCenter = projection.fromOffsetToCoord(point);
-            mapInstance.current.panTo(newCenter, { duration: 300 });
           }
         });
       }

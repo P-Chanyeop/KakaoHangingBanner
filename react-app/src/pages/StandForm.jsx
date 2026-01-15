@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { standsAPI } from '../services/api';
 import UnifiedMap from '../components/UnifiedMap';
@@ -84,6 +84,20 @@ function StandForm() {
   const [mapZoom, setMapZoom] = useState(14);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [coordsDisplay, setCoordsDisplay] = useState('지도를 클릭하여 위치를 선택하세요');
+  const [existingStands, setExistingStands] = useState([]);
+
+  // 기존 게시대 목록 로드
+  useEffect(() => {
+    const loadStands = async () => {
+      try {
+        const data = await standsAPI.getAll();
+        setExistingStands(data);
+      } catch (error) {
+        console.error('게시대 목록 로드 실패:', error);
+      }
+    };
+    loadStands();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -362,11 +376,17 @@ function StandForm() {
               <UnifiedMap
                 center={mapCenter}
                 zoom={mapZoom}
-                markers={selectedMarker ? [selectedMarker] : []}
+                markers={[
+                  ...existingStands.filter(s => s.latitude && s.longitude).map(s => ({
+                    lat: s.latitude, lng: s.longitude, title: s.name
+                  })),
+                  ...(selectedMarker ? [selectedMarker] : [])
+                ]}
                 onMapClick={handleMapClick}
                 showTabs={true}
                 defaultProvider="naver"
                 autoFitBounds={false}
+                showPermanentLabels={true}
                 roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
                 style={{ width: '100%', height: '100%' }}
               />
@@ -443,11 +463,17 @@ function StandForm() {
           <UnifiedMap
             center={mapCenter}
             zoom={mapZoom}
-            markers={selectedMarker ? [selectedMarker] : []}
+            markers={[
+              ...existingStands.filter(s => s.latitude && s.longitude).map(s => ({
+                lat: s.latitude, lng: s.longitude, title: s.name
+              })),
+              ...(selectedMarker ? [selectedMarker] : [])
+            ]}
             onMapClick={handleMapClick}
             showTabs={true}
             defaultProvider="naver"
             autoFitBounds={false}
+            showPermanentLabels={true}
             roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
             style={{ width: '100%', height: '100%' }}
           />
