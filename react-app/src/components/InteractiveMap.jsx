@@ -12,16 +12,7 @@ const GYEONGBUK_REGIONS = [
 // SVG 지역명 매핑 (SVG의 지역명 → 실제 지역명)
 const REGION_NAME_MAP = {
   '포항시 남구': '포항시',
-  '포항시 북구': '포항시',
-  // 대구광역시 구들을 모두 "대구광역시"로 매핑
-  '남구': '대구광역시',
-  '달서구': '대구광역시',
-  '달성군': '대구광역시',
-  '동구': '대구광역시',
-  '북구': '대구광역시',
-  '서구': '대구광역시',
-  '수성구': '대구광역시',
-  '중구': '대구광역시'
+  '포항시 북구': '포항시'
 };
 
 // 경남 지역 (MapSearch.jsx와 동일)
@@ -44,48 +35,21 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
 
   useEffect(() => {
     // SVG 파일 로드
-    const loadSVGs = async () => {
+    const loadSVG = async () => {
       try {
-        if (region === 'gyeongbuk') {
-          // 경상북도와 대구광역시 SVG 모두 로드
-          const [gyeongbukResponse, daeguResponse] = await Promise.all([
-            fetch('/static/경상북도_시군구.svg'),
-            fetch('/static/대구광역시_시군구.svg')
-          ]);
+        const svgFile = region === 'gyeongbuk'
+          ? '/static/경상북도_시군구.svg'
+          : '/static/경상남도_시군구.svg';
 
-          const gyeongbukText = await gyeongbukResponse.text();
-          const daeguText = await daeguResponse.text();
-
-          // 두 SVG를 합치기
-          const parser = new DOMParser();
-          const gyeongbukDoc = parser.parseFromString(gyeongbukText, 'image/svg+xml');
-          const daeguDoc = parser.parseFromString(daeguText, 'image/svg+xml');
-
-          const gyeongbukSvg = gyeongbukDoc.querySelector('svg');
-          const daeguSvg = daeguDoc.querySelector('svg');
-
-          // 대구 SVG의 모든 path를 경북 SVG에 추가
-          const daeguPaths = daeguSvg.querySelectorAll('path[id]');
-          daeguPaths.forEach(path => {
-            gyeongbukSvg.appendChild(path.cloneNode(true));
-          });
-
-          // 합쳐진 SVG를 문자열로 변환
-          const serializer = new XMLSerializer();
-          const combinedSvg = serializer.serializeToString(gyeongbukSvg);
-          setSvgContent(combinedSvg);
-        } else {
-          // 경남은 기존 방식 그대로
-          const response = await fetch('/static/경상남도_시군구.svg');
-          const text = await response.text();
-          setSvgContent(text);
-        }
+        const response = await fetch(svgFile);
+        const text = await response.text();
+        setSvgContent(text);
       } catch (error) {
         console.error('SVG 로드 실패:', error);
       }
     };
 
-    loadSVGs();
+    loadSVG();
   }, [region]);
 
   useEffect(() => {
@@ -105,10 +69,12 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
     // 허용된 지역들의 전체 경계 박스 계산
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-    // 이미 라벨이 추가된 지역명 추적 (대구광역시 중복 방지)
+    // 이미 라벨이 추가된 지역명 추적
     const addedLabels = new Set();
-    // 대구광역시의 모든 구 경계 박스 수집
-    const daeguBoundingBoxes = [];
+
+    // 대구 위치 계산을 위한 주변 지역 좌표 수집
+    let gyeongsanCenter = null;
+    let chilgokCenter = null;
 
     paths.forEach(path => {
       const svgRegionName = path.id;
@@ -134,9 +100,17 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
           maxX = Math.max(maxX, bbox.x + bbox.width);
           maxY = Math.max(maxY, bbox.y + bbox.height);
 
-          // 대구광역시 구들의 경계 박스 수집
-          if (regionName === '대구광역시') {
-            daeguBoundingBoxes.push(bbox);
+          // 대구 위치 계산을 위한 주변 지역 중심점 저장
+          if (svgRegionName === '경산시') {
+            gyeongsanCenter = {
+              x: bbox.x + bbox.width / 2,
+              y: bbox.y + bbox.height / 2
+            };
+          } else if (svgRegionName === '칠곡군') {
+            chilgokCenter = {
+              x: bbox.x + bbox.width / 2,
+              y: bbox.y + bbox.height / 2
+            };
           }
         } catch (error) {
           // getBBox 실패 시 무시
@@ -180,8 +154,7 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         path._listeners = { handleMouseEnter, handleMouseLeave, handleClick };
 
         // 라벨 추가 (허용된 지역만, 중복 방지)
-        // 대구광역시는 나중에 한 번만 추가
-        if (regionName !== '대구광역시' && !addedLabels.has(regionName)) {
+        if (!addedLabels.has(regionName)) {
           try {
             const bbox = path.getBBox();
             const centerX = bbox.x + bbox.width / 2;
@@ -216,35 +189,69 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
       }
     });
 
-    // 대구광역시 라벨 추가 (모든 구의 중앙에 한 번만)
-    if (daeguBoundingBoxes.length > 0) {
+    // 경상북도인 경우 대구광역시를 수동으로 추가
+    if (region === 'gyeongbuk' && gyeongsanCenter && chilgokCenter) {
       try {
-        // 모든 대구 구들의 중심점 계산
-        let totalCenterX = 0;
-        let totalCenterY = 0;
-        daeguBoundingBoxes.forEach(bbox => {
-          totalCenterX += bbox.x + bbox.width / 2;
-          totalCenterY += bbox.y + bbox.height / 2;
-        });
-        const avgCenterX = totalCenterX / daeguBoundingBoxes.length;
-        const avgCenterY = totalCenterY / daeguBoundingBoxes.length;
+        // 대구 위치: 경산시와 칠곡군 사이 (약간 서쪽)
+        const daeguX = (gyeongsanCenter.x + chilgokCenter.x) / 2 - 20;
+        const daeguY = (gyeongsanCenter.y + chilgokCenter.y) / 2;
+        const daeguRadius = 25;
 
-        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        label.setAttribute('x', avgCenterX);
-        label.setAttribute('y', avgCenterY);
-        label.setAttribute('text-anchor', 'middle');
-        label.setAttribute('dominant-baseline', 'middle');
-        label.setAttribute('class', 'region-label');
-        label.setAttribute('pointer-events', 'none');
-        label.style.fontSize = '12px';
-        label.style.fontWeight = 'bold';
-        label.style.fill = '#333';
-        label.style.userSelect = 'none';
-        label.textContent = '대구광역시';
+        // 대구를 표현하는 원형 path 생성
+        const daeguPath = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        daeguPath.setAttribute('id', '대구광역시');
+        daeguPath.setAttribute('cx', daeguX);
+        daeguPath.setAttribute('cy', daeguY);
+        daeguPath.setAttribute('r', daeguRadius);
+        daeguPath.style.fill = '#f0f0f0';
+        daeguPath.style.stroke = '#666';
+        daeguPath.style.strokeWidth = '1';
+        daeguPath.style.cursor = 'pointer';
+        daeguPath.style.transition = 'all 0.2s';
 
-        svgElement.appendChild(label);
+        // 마우스 이벤트
+        const handleDaeguMouseEnter = () => {
+          daeguPath.style.fill = '#fbbf24';
+          daeguPath.style.stroke = '#f59e0b';
+          daeguPath.style.strokeWidth = '2';
+        };
+
+        const handleDaeguMouseLeave = () => {
+          daeguPath.style.fill = '#f0f0f0';
+          daeguPath.style.stroke = '#666';
+          daeguPath.style.strokeWidth = '1';
+        };
+
+        const handleDaeguClick = () => {
+          if (onRegionClick) {
+            onRegionClick('대구광역시');
+          }
+        };
+
+        daeguPath.addEventListener('mouseenter', handleDaeguMouseEnter);
+        daeguPath.addEventListener('mouseleave', handleDaeguMouseLeave);
+        daeguPath.addEventListener('click', handleDaeguClick);
+        daeguPath._listeners = { handleDaeguMouseEnter, handleDaeguMouseLeave, handleDaeguClick };
+
+        svgElement.appendChild(daeguPath);
+
+        // 대구광역시 라벨 추가
+        const daeguLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        daeguLabel.setAttribute('x', daeguX);
+        daeguLabel.setAttribute('y', daeguY);
+        daeguLabel.setAttribute('text-anchor', 'middle');
+        daeguLabel.setAttribute('dominant-baseline', 'middle');
+        daeguLabel.setAttribute('class', 'region-label');
+        daeguLabel.setAttribute('pointer-events', 'none');
+        daeguLabel.style.fontSize = '11px';
+        daeguLabel.style.fontWeight = 'bold';
+        daeguLabel.style.fill = '#333';
+        daeguLabel.style.userSelect = 'none';
+        daeguLabel.textContent = '대구';
+
+        svgElement.appendChild(daeguLabel);
       } catch (error) {
-        console.error('대구광역시 라벨 추가 실패:', error);
+        console.error('대구광역시 추가 실패:', error);
       }
     }
 
@@ -268,6 +275,14 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
           path.removeEventListener('click', path._listeners.handleClick);
         }
       });
+
+      // 대구 circle 클린업
+      const daeguCircle = svgContainerRef.current?.querySelector('circle#대구광역시');
+      if (daeguCircle && daeguCircle._listeners) {
+        daeguCircle.removeEventListener('mouseenter', daeguCircle._listeners.handleDaeguMouseEnter);
+        daeguCircle.removeEventListener('mouseleave', daeguCircle._listeners.handleDaeguMouseLeave);
+        daeguCircle.removeEventListener('click', daeguCircle._listeners.handleDaeguClick);
+      }
     };
   }, [svgContent, onRegionClick, region]);
 
