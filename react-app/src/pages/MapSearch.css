@@ -232,9 +232,9 @@
         max-width: 100%;
         min-width: 0;
         height: calc(100vh - 60px);
-        z-index: 1000;
+        z-index: 1100;
         transform: translateX(0);
-        box-shadow: none;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     }
 
     .map-search-sidebar.collapsed {
@@ -243,13 +243,18 @@
 
     .map-search-toggle-btn {
         position: fixed;
-        left: 10px;
-        top: 80px;
-        transform: none;
-        border-radius: 0.5rem;
-        z-index: 1001;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        padding: 0.75rem 0.5rem;
+        left: calc(100% - 3rem);
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 0 0.5rem 0.5rem 0;
+        z-index: 1101;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+        padding: 1rem 0.75rem;
+        transition: left 0.3s ease;
+    }
+
+    .map-search-container:has(.map-search-sidebar.collapsed) .map-search-toggle-btn {
+        left: 0;
     }
 
     .map-search-sidebar-header {

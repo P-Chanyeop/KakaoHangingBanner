@@ -83,4 +83,9 @@
         margin-right: 0;
         font-size: 1.2rem;
     }
+
+    /* 사이드바가 열려있을 때 지도 탭 숨김 */
+    .map-tabs-hidden-mobile {
+        display: none !important;
+    }
 }
