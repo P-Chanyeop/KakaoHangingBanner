@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { standsAPI } from '../services/api';
 import UnifiedMap from '../components/UnifiedMap';
@@ -98,6 +98,20 @@ function StandForm() {
     };
     loadStands();
   }, []);
+
+  // 마커 배열 메모이제이션 - formData의 다른 필드 변경 시 리렌더링 방지
+  const markers = useMemo(() => [
+    ...existingStands.filter(s => s.latitude && s.longitude).map(s => ({
+      lat: s.latitude, lng: s.longitude, title: s.name
+    })),
+    ...(selectedMarker ? [selectedMarker] : [])
+  ], [existingStands, selectedMarker]);
+
+  const roadviewTarget = useMemo(() => 
+    formData.latitude && formData.longitude 
+      ? { lat: formData.latitude, lng: formData.longitude } 
+      : null
+  , [formData.latitude, formData.longitude]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -376,18 +390,13 @@ function StandForm() {
               <UnifiedMap
                 center={mapCenter}
                 zoom={mapZoom}
-                markers={[
-                  ...existingStands.filter(s => s.latitude && s.longitude).map(s => ({
-                    lat: s.latitude, lng: s.longitude, title: s.name
-                  })),
-                  ...(selectedMarker ? [selectedMarker] : [])
-                ]}
+                markers={markers}
                 onMapClick={handleMapClick}
                 showTabs={true}
                 defaultProvider="naver"
                 autoFitBounds={false}
                 showPermanentLabels={true}
-                roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
+                roadviewTarget={roadviewTarget}
                 style={{ width: '100%', height: '100%' }}
               />
             </div>
@@ -463,18 +472,13 @@ function StandForm() {
           <UnifiedMap
             center={mapCenter}
             zoom={mapZoom}
-            markers={[
-              ...existingStands.filter(s => s.latitude && s.longitude).map(s => ({
-                lat: s.latitude, lng: s.longitude, title: s.name
-              })),
-              ...(selectedMarker ? [selectedMarker] : [])
-            ]}
+            markers={markers}
             onMapClick={handleMapClick}
             showTabs={true}
             defaultProvider="naver"
             autoFitBounds={false}
             showPermanentLabels={true}
-            roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
+            roadviewTarget={roadviewTarget}
             style={{ width: '100%', height: '100%' }}
           />
         </div>
