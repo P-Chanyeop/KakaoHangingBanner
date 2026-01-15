@@ -225,15 +225,16 @@
     }
 
     .map-search-sidebar {
-        position: absolute;
+        position: fixed;
         left: 0;
-        top: 0;
-        width: 100%;
-        max-width: 100%;
-        min-width: 100%;
-        height: 100%;
+        top: 60px;
+        width: 85%;
+        max-width: 400px;
+        min-width: 0;
+        height: calc(100vh - 60px);
         z-index: 1000;
         transform: translateX(0);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     }
 
     .map-search-sidebar.collapsed {
@@ -247,7 +248,8 @@
         transform: none;
         border-radius: 0.5rem;
         z-index: 1001;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        padding: 0.75rem 0.5rem;
     }
 
     .map-search-sidebar-header {
@@ -255,25 +257,47 @@
     }
 
     .map-search-sidebar-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .map-search-box {
         flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .map-search-region-select {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
     }
 
     .map-search-input,
     .map-search-btn {
         width: 100%;
+        padding: 0.6rem;
+        font-size: 0.9rem;
     }
 
     .map-search-stand-item {
         padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .map-search-stand-name {
         font-size: 0.9rem;
+    }
+
+    .map-search-stand-address {
+        font-size: 0.8rem;
     }
 
     .map-search-map {
         width: 100%;
         height: 100%;
+    }
+
+    .map-search-stats-bar {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
     }
 }
