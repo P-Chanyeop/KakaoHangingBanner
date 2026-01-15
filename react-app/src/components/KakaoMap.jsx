@@ -116,11 +116,10 @@ function KakaoMap({
   useEffect(() => {
     if (mapInstance.current && window.kakao) {
       const moveLatLon = new window.kakao.maps.LatLng(center.lat, center.lng);
-      mapInstance.current.setCenter(moveLatLon);
       // 카카오 지도는 레벨이 낮을수록 확대됨 (다른 지도와 반대)
-      // 초기 로딩 시에는 한국 전체가 보이도록 높은 레벨 사용
       const kakaoLevel = zoom === 7 ? 13 : zoom === 13 ? 6 : zoom === 16 ? 3 : zoom === 12 ? 6 : Math.max(1, 15 - zoom);
       mapInstance.current.setLevel(kakaoLevel);
+      mapInstance.current.panTo(moveLatLon);
     }
   }, [center, zoom]);
 
