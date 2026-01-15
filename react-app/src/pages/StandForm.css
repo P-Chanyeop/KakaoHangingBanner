@@ -30,6 +30,11 @@
   box-shadow: var(--shadow-lg);
 }
 
+/* 모바일용 지도 - PC에서 숨김 */
+.stand-form-map-mobile {
+  display: none;
+}
+
 .form-title {
   font-size: 1.5rem;
   font-weight: 700;
@@ -122,15 +127,32 @@ textarea.form-control {
 }
 
 @media (max-width: 900px) {
+  .stand-form-main {
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+
   .stand-form-horizontal {
     flex-direction: column;
+    height: auto;
   }
   
   .stand-form-left {
     width: 100%;
   }
   
+  /* PC용 지도 숨김 */
   .stand-form-right {
-    height: 400px;
+    display: none;
+  }
+
+  /* 모바일용 지도 표시 */
+  .stand-form-map-mobile {
+    display: block;
+    height: 350px;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 2px solid var(--border-color);
   }
 }

@@ -357,6 +357,21 @@ function StandForm() {
               </div>
             </div>
 
+            {/* 모바일용 지도 (주소와 좌표 사이) */}
+            <div className="stand-form-map-mobile">
+              <UnifiedMap
+                center={mapCenter}
+                zoom={mapZoom}
+                markers={selectedMarker ? [selectedMarker] : []}
+                onMapClick={handleMapClick}
+                showTabs={true}
+                defaultProvider="naver"
+                autoFitBounds={false}
+                roadviewTarget={formData.latitude && formData.longitude ? { lat: formData.latitude, lng: formData.longitude } : null}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+
             <div className="coordinates-display">
               좌표: <span className="coordinates-value">{coordsDisplay}</span>
             </div>
@@ -423,7 +438,7 @@ function StandForm() {
           </form>
         </div>
 
-        {/* 오른쪽: 지도 */}
+        {/* PC용 지도 (오른쪽) */}
         <div className="stand-form-right">
           <UnifiedMap
             center={mapCenter}

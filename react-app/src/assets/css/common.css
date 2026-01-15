@@ -39,7 +39,7 @@ body {
     box-shadow: var(--shadow-sm);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 1200;
 }
 
 .header-container {
@@ -255,7 +255,7 @@ body {
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease;
-        z-index: 999;
+        z-index: 1200;
     }
 
     .nav-container.mobile-open {
