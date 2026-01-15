@@ -228,13 +228,13 @@
         position: fixed;
         left: 0;
         top: 60px;
-        width: 85%;
-        max-width: 400px;
+        width: 100%;
+        max-width: 100%;
         min-width: 0;
         height: calc(100vh - 60px);
         z-index: 1000;
         transform: translateX(0);
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+        box-shadow: none;
     }
 
     .map-search-sidebar.collapsed {

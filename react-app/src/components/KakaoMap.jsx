@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import './KakaoMap.css';
 
 function KakaoMap({
   center = { lat: 36.5, lng: 127.5 },
@@ -274,6 +275,7 @@ function KakaoMap({
       {showRoadview && (
         <button
           type="button"
+          className="kakao-roadview-btn"
           onClick={toggleRoadview}
           disabled={!roadviewAvailable && isRoadviewOpen}
           style={{
@@ -307,12 +309,22 @@ function KakaoMap({
             e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
           }}
         >
-          {roadviewMode === 'selector'
-            ? (isRoadviewOpen 
-                ? '🗺️ 지도 보기'
-                : (isSelectingRoadview ? '🚫 선택 취소' : '👁️ 로드뷰 선택'))
-            : (isRoadviewOpen ? '🗺️ 지도 보기' : '👁️ 로드뷰')
-          }
+          <span className="roadview-icon">
+            {roadviewMode === 'selector'
+              ? (isRoadviewOpen
+                  ? '🗺️'
+                  : (isSelectingRoadview ? '🚫' : '👁️'))
+              : (isRoadviewOpen ? '🗺️' : '👁️')
+            }
+          </span>
+          <span className="roadview-text">
+            {roadviewMode === 'selector'
+              ? (isRoadviewOpen
+                  ? ' 지도 보기'
+                  : (isSelectingRoadview ? ' 선택 취소' : ' 로드뷰 선택'))
+              : (isRoadviewOpen ? ' 지도 보기' : ' 로드뷰')
+            }
+          </span>
         </button>
       )}
 

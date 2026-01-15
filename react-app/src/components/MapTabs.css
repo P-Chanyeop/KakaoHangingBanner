@@ -69,13 +69,18 @@
 /* 반응형 */
 @media (max-width: 768px) {
     .map-tabs-container {
-        width: 100%;
-        justify-content: space-between;
+        padding: 0.4rem;
+        gap: 0.3rem;
     }
 
     .map-tab-button {
-        flex: 1;
-        padding: 0.65rem 1rem;
-        font-size: 0.85rem;
+        padding: 0.6rem;
+        font-size: 0;
+        min-width: 40px;
+    }
+
+    .map-tab-icon {
+        margin-right: 0;
+        font-size: 1.2rem;
     }
 }
