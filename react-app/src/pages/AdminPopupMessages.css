@@ -32,6 +32,9 @@
   font-family: inherit;
   resize: vertical;
   margin-bottom: 1rem;
+  min-height: 500px;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .message-section button {

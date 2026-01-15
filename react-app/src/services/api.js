@@ -239,6 +239,17 @@ export const calendarAPI = {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('일정 삭제에 실패했습니다.');
+  },
+
+  // 이벤트 수정
+  update: async (id, data) => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/calendar-events/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('일정 수정에 실패했습니다.');
+    return response.json();
   }
 };
 

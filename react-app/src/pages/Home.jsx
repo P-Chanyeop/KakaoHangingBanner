@@ -13,6 +13,7 @@ function Home() {
   const [allEvents, setAllEvents] = useState({});
   const [eventContent, setEventContent] = useState('');
   const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
   const [hero1Image, setHero1Image] = useState(null);
   const [hero2Image, setHero2Image] = useState(null);
   const [webhardMessage, setWebhardMessage] = useState('');
@@ -197,23 +198,42 @@ function Home() {
     if (!eventContent.trim()) return;
 
     try {
-      const eventData = {
-        title: eventContent,
-        content: null,
-        eventDate: selectedDate,
-        category: '메모',
-        backgroundColor: '#3b82f6',
-        textColor: '#ffffff',
-        completed: false
-      };
-
-      await calendarAPI.create(eventData);
+      if (editingEvent) {
+        // 수정
+        await calendarAPI.update(editingEvent.id, {
+          ...editingEvent,
+          title: eventContent
+        });
+        setEditingEvent(null);
+      } else {
+        // 새로 추가
+        const eventData = {
+          title: eventContent,
+          content: null,
+          eventDate: selectedDate,
+          category: '메모',
+          backgroundColor: '#3b82f6',
+          textColor: '#ffffff',
+          completed: false
+        };
+        await calendarAPI.create(eventData);
+      }
       setEventContent('');
       loadEvents();
     } catch (error) {
       console.error('일정 저장 실패:', error);
       alert('메모 저장에 실패했습니다.');
     }
+  };
+
+  const startEditEvent = (event) => {
+    setEditingEvent(event);
+    setEventContent(event.title);
+  };
+
+  const cancelEdit = () => {
+    setEditingEvent(null);
+    setEventContent('');
   };
 
   const deleteEvent = async (eventId) => {
@@ -411,16 +431,28 @@ function Home() {
                         placeholder="메모를 입력하세요 (엔터로 줄바꿈 가능)"
                       />
                     </div>
-                    <button type="submit">
-                      <i className="fas fa-plus"></i> 추가
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="submit">
+                        <i className={`fas fa-${editingEvent ? 'save' : 'plus'}`}></i> {editingEvent ? '수정' : '추가'}
+                      </button>
+                      {editingEvent && (
+                        <button type="button" onClick={cancelEdit} style={{ background: '#6c757d' }}>
+                          <i className="fas fa-times"></i> 취소
+                        </button>
+                      )}
+                    </div>
                   </form>
 
                   {/* Event List */}
                   <div className="event-list">
                     {selectedEvents.map(event => (
                       <div key={event.id} className="event-item">
-                        <div className="event-content">
+                        <div 
+                          className="event-content" 
+                          onClick={() => startEditEvent(event)}
+                          style={{ cursor: 'pointer' }}
+                          title="클릭하여 수정"
+                        >
                           {event.title.split('\n').map((line, idx) => (
                             <div key={idx} style={{ padding: '0.25rem 0', color: 'var(--text-dark)' }}>
                               {line || '\u00A0'}
@@ -428,6 +460,9 @@ function Home() {
                           ))}
                         </div>
                         <div className="event-actions">
+                          <button onClick={() => startEditEvent(event)} title="수정">
+                            <i className="fas fa-edit"></i>
+                          </button>
                           <button onClick={() => deleteEvent(event.id)} title="삭제">
                             <i className="fas fa-trash"></i>
                           </button>
