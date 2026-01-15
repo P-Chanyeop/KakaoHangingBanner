@@ -8,13 +8,15 @@ function KakaoMap({
   style = { width: '100%', height: '100%' },
   showRoadview = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
-  roadviewTarget = null // 로드뷰를 보여줄 특정 좌표 (핀 위치)
+  roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
+  showPermanentLabels = false
 }) {
   const mapRef = useRef(null);
   const roadviewRef = useRef(null);
   const mapInstance = useRef(null);
   const roadviewInstance = useRef(null);
   const markersRef = useRef([]);
+  const labelsRef = useRef([]);
   const isSelectingRoadviewRef = useRef(false); // ref로 상태 추적
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
@@ -140,6 +142,10 @@ function KakaoMap({
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
+    // 기존 라벨 제거
+    labelsRef.current.forEach(label => label.setMap(null));
+    labelsRef.current = [];
+
     // 새 마커 추가
     markers.forEach(markerData => {
       const markerPosition = new window.kakao.maps.LatLng(markerData.lat, markerData.lng);
@@ -147,6 +153,31 @@ function KakaoMap({
         position: markerPosition,
         map: mapInstance.current
       });
+
+      // 상시 라벨 (CustomOverlay)
+      if (showPermanentLabels && markerData.title) {
+        const labelContent = document.createElement('div');
+        labelContent.innerHTML = markerData.title;
+        labelContent.style.cssText = `
+          background: white;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          padding: 2px 6px;
+          font-size: 11px;
+          font-weight: 600;
+          white-space: nowrap;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          pointer-events: none;
+        `;
+
+        const labelOverlay = new window.kakao.maps.CustomOverlay({
+          position: markerPosition,
+          content: labelContent,
+          yAnchor: 3.0
+        });
+        labelOverlay.setMap(mapInstance.current);
+        labelsRef.current.push(labelOverlay);
+      }
 
       // 인포윈도우 추가
       if (markerData.content) {

@@ -9,7 +9,8 @@ function NaverMap({
   showRoadview = true,
   autoFitBounds = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
-  roadviewTarget = null // 로드뷰를 보여줄 특정 좌표 (핀 위치)
+  roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
+  showPermanentLabels = false
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -18,6 +19,7 @@ function NaverMap({
   const panoInstance = useRef(null);
   const panoLayerRef = useRef(null);
   const markersRef = useRef([]);
+  const labelsRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [roadviewAvailable, setRoadviewAvailable] = useState(true);
@@ -157,6 +159,10 @@ function NaverMap({
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
+    // 기존 라벨 제거
+    labelsRef.current.forEach(label => label.setMap(null));
+    labelsRef.current = [];
+
     // 새 마커 추가
     markers.forEach((markerData, index) => {
       const position = new window.naver.maps.LatLng(markerData.lat, markerData.lng);
@@ -166,6 +172,47 @@ function NaverMap({
         map: mapInstance.current,
         title: markerData.title || `마커 ${index + 1}`
       });
+
+      // 상시 라벨 (CustomOverlay)
+      if (showPermanentLabels && markerData.title) {
+        const labelOverlay = new window.naver.maps.OverlayView();
+        
+        labelOverlay.onAdd = function() {
+          const div = document.createElement('div');
+          div.innerHTML = markerData.title;
+          div.style.cssText = `
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            pointer-events: none;
+          `;
+          this.div = div;
+          this.getPanes().overlayLayer.appendChild(div);
+        };
+
+        labelOverlay.draw = function() {
+          const proj = mapInstance.current.getProjection();
+          const pos = proj.fromCoordToOffset(marker.getPosition());
+          this.div.style.position = 'absolute';
+          this.div.style.left = (pos.x - this.div.offsetWidth / 2) + 'px';
+          this.div.style.top = (pos.y - 60) + 'px';
+        };
+
+        labelOverlay.onRemove = function() {
+          if (this.div) {
+            this.div.remove();
+            this.div = null;
+          }
+        };
+
+        labelOverlay.setMap(mapInstance.current);
+        labelsRef.current.push(labelOverlay);
+      }
 
       // 인포윈도우 추가
       if (markerData.content) {

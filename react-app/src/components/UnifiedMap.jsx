@@ -24,7 +24,8 @@ function UnifiedMap({
   autoFitBounds = true,
   roadviewMode = 'toggle',
   roadviewTarget = null, // 로드뷰 대상 좌표
-  tabPosition = 'top-center' // 탭 위치: 'top-center' or 'bottom-right'
+  tabPosition = 'top-center', // 탭 위치: 'top-center' or 'bottom-right'
+  showPermanentLabels = false
 }) {
   const [mapProvider, setMapProvider] = useState(defaultProvider);
   const leafletMapRef = useRef(null);
@@ -152,6 +153,7 @@ function UnifiedMap({
           showRoadview={true}
           roadviewMode={roadviewMode}
           roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
+          showPermanentLabels={showPermanentLabels}
         />
       )}
 
@@ -165,6 +167,7 @@ function UnifiedMap({
           autoFitBounds={autoFitBounds}
           roadviewMode={roadviewMode}
           roadviewTarget={roadviewMode === 'selector' ? null : roadviewTarget}
+          showPermanentLabels={showPermanentLabels}
         />
       )}
     </div>

@@ -279,6 +279,7 @@ function MapSearch() {
       return {
         lat: stand.latitude,
         lng: stand.longitude,
+        title: stand.name,
         content: `
           <div style="min-width: 200px; max-width: 300px; padding: 10px; word-wrap: break-word;">
             ${imageUrl ? `<img src="${imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none';">` : ''}
@@ -421,6 +422,7 @@ function MapSearch() {
             autoFitBounds={false}
             roadviewMode="selector"
             tabPosition="bottom-right"
+            showPermanentLabels={true}
             style={{ width: '100%', height: '100%' }}
           />
         </div>
