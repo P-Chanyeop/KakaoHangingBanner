@@ -6,8 +6,14 @@ const GYEONGBUK_REGIONS = [
   '경산시', '경주시', '고령군', '구미시', '군위군', '김천시',
   '문경시', '봉화군', '상주시', '성주군', '안동시', '영덕군',
   '영양군', '영주시', '영천시', '예천군', '울진군', '의성군',
-  '청도군', '청송군', '칠곡군', '포항시', '대구광역시'
+  '청도군', '청송군', '칠곡군', '포항시'
 ];
+
+// SVG 지역명 매핑 (SVG의 지역명 → 실제 지역명)
+const REGION_NAME_MAP = {
+  '포항시 남구': '포항시',
+  '포항시 북구': '포항시'
+};
 
 // 경남 지역 (MapSearch.jsx와 동일)
 const GYEONGNAM_REGIONS = [
@@ -57,13 +63,16 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
     paths.forEach(path => {
-      const regionName = path.id;
+      const svgRegionName = path.id;
 
       // 울릉군은 숨김 처리
-      if (regionName === '울릉군') {
+      if (svgRegionName === '울릉군') {
         path.style.display = 'none';
         return;
       }
+
+      // SVG 지역명을 실제 지역명으로 매핑
+      const regionName = REGION_NAME_MAP[svgRegionName] || svgRegionName;
 
       // 허용된 지역인지 확인
       const isAllowed = allowedRegions.includes(regionName);
