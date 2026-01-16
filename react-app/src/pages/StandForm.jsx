@@ -283,16 +283,16 @@ function StandForm() {
       
       alert('게시대가 저장되었습니다.');
       
-      // 폼 초기화 (페이지는 그대로 유지)
-      setFormData({
+      // 폼 초기화 (지역은 유지, 나머지만 초기화)
+      setFormData(prev => ({
         name: '',
-        region: '',
+        region: prev.region,  // 지역 유지
         address: '',
         latitude: null,
         longitude: null,
         description: '',
         imageFile: null
-      });
+      }));
       setSelectedMarker(null);
       setCoordsDisplay('지도를 클릭하여 위치를 선택하세요');
       setImagePreview(null);

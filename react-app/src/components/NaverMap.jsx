@@ -15,15 +15,19 @@ function NaverMap({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const panoRef = useRef(null);
+  const minimapRef = useRef(null);
   const mapInstance = useRef(null);
   const panoInstance = useRef(null);
   const panoLayerRef = useRef(null);
+  const minimapInstance = useRef(null);
+  const minimapMarkerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [roadviewAvailable, setRoadviewAvailable] = useState(true);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
+  const [pov, setPov] = useState({ pan: 0 });
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -106,14 +110,19 @@ function NaverMap({
             }
           });
 
-          // 파노라마 변경 이벤트
+          // 파노라마 변경 이벤트 (위치 변경 시 미니맵 업데이트)
           window.naver.maps.Event.addListener(panoInstance.current, 'pano_changed', function() {
-            // 파노라마 위치 변경됨 (로그 제거)
+            if (minimapInstance.current && minimapMarkerRef.current) {
+              const pos = panoInstance.current.getPosition();
+              minimapInstance.current.setCenter(pos);
+              minimapMarkerRef.current.setPosition(pos);
+            }
           });
 
-          // 파노라마 시야 변경 이벤트
+          // 파노라마 시야 변경 이벤트 (방향 변경 시 마커 회전)
           window.naver.maps.Event.addListener(panoInstance.current, 'pov_changed', function() {
-            // 파노라마 시야 변경됨 (로그 제거)
+            const currentPov = panoInstance.current.getPov();
+            setPov({ pan: currentPov.pan });
           });
 
           // PanoramaLayer 초기화 (selector 모드용)
@@ -143,11 +152,80 @@ function NaverMap({
     }
   }, []);
 
+  // 전역 로드뷰 열기 함수 등록 (인포윈도우 버튼용)
+  useEffect(() => {
+    window.openRoadview = (lat, lng) => {
+      if (panoInstance.current && window.naver) {
+        const position = new window.naver.maps.LatLng(lat, lng);
+        panoInstance.current.setPosition(position);
+        panoInstance.current.setVisible(true);
+        setIsRoadviewOpen(true);
+        setIsSelectingRoadview(true); // selector 모드용
+      }
+    };
+    return () => { delete window.openRoadview; };
+  }, []);
+
+  // 미니맵 초기화 (한 번만)
+  useEffect(() => {
+    if (!showRoadview || !minimapRef.current || !window.naver) return;
+    if (minimapInstance.current) return; // 이미 초기화됨
+    
+    const pos = new window.naver.maps.LatLng(center.lat, center.lng);
+    
+    minimapInstance.current = new window.naver.maps.Map(minimapRef.current, {
+      center: pos,
+      zoom: 17,
+      draggable: true,
+      scrollWheel: true,
+      zoomControl: false,
+      mapTypeControl: false,
+      scaleControl: false,
+      logoControl: false,
+      mapDataControl: false
+    });
+
+    minimapMarkerRef.current = new window.naver.maps.Marker({
+      position: pos,
+      map: minimapInstance.current,
+      icon: {
+        content: `<div style="transform: rotate(0deg); transform-origin: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="#03c75a" stroke="white" stroke-width="2"/>
+            <polygon points="12,2 16,10 12,8 8,10" fill="white"/>
+          </svg>
+        </div>`,
+        anchor: new window.naver.maps.Point(12, 12)
+      }
+    });
+
+    // 미니맵 클릭 시 해당 위치로 로드뷰 이동
+    window.naver.maps.Event.addListener(minimapInstance.current, 'click', function(e) {
+      if (panoInstance.current) {
+        panoInstance.current.setPosition(e.coord);
+      }
+    });
+  }, [showRoadview]);
+
+  // 미니맵 마커 방향 업데이트
+  useEffect(() => {
+    if (!minimapMarkerRef.current || !window.naver) return;
+    minimapMarkerRef.current.setIcon({
+      content: `<div style="transform: rotate(${pov.pan}deg); transform-origin: center;">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="#03c75a" stroke="white" stroke-width="2"/>
+          <polygon points="12,2 16,10 12,8 8,10" fill="white"/>
+        </svg>
+      </div>`,
+      anchor: new window.naver.maps.Point(12, 12)
+    });
+  }, [pov.pan]);
+
   // 중심 이동 및 줌 레벨 변경
   useEffect(() => {
     if (mapInstance.current && window.naver) {
       const moveLatLng = new window.naver.maps.LatLng(center.lat, center.lng);
-      mapInstance.current.morph(moveLatLng, zoom, { duration: 300 });
+      mapInstance.current.morph(moveLatLng, zoom, { duration: 500, easing: 'easeOutCubic' });
     }
   }, [center.lat, center.lng, zoom]);
 
@@ -384,6 +462,25 @@ function NaverMap({
         ></div>
       )}
 
+      {/* 미니맵 (로드뷰 열릴 때만 표시) */}
+      {showRoadview && (
+        <div
+          ref={minimapRef}
+          style={{
+            position: 'absolute',
+            top: '60px',
+            right: '10px',
+            width: '180px',
+            height: '140px',
+            border: '3px solid white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            zIndex: 1050,
+            display: isRoadviewOpen ? 'block' : 'none'
+          }}
+        ></div>
+      )}
+
       {/* 로드뷰 토글 버튼 */}
       {showRoadview && (
         <button
@@ -394,7 +491,7 @@ function NaverMap({
             position: 'absolute',
             top: '10px',
             right: '10px',
-            zIndex: 1000,
+            zIndex: 1100,
             padding: '10px 15px',
             backgroundColor:
               roadviewMode === 'selector'

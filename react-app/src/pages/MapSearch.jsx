@@ -276,6 +276,10 @@ function MapSearch() {
     .map(stand => {
       const imageUrl = stand.imageUrl;
       
+      const naverMapUrl = stand.address 
+        ? `https://map.naver.com/p/search/${encodeURIComponent(stand.address)}`
+        : `https://map.naver.com/p?c=${stand.longitude},${stand.latitude},15,0,0,0,dh`;
+      
       return {
         lat: stand.latitude,
         lng: stand.longitude,
@@ -284,9 +288,10 @@ function MapSearch() {
           <div style="min-width: 200px; max-width: 300px; padding: 10px; word-wrap: break-word;">
             ${imageUrl ? `<img src="${imageUrl}" alt="${stand.name}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.style.display='none';">` : ''}
             <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-blue); font-size: 1rem; line-height: 1.3; word-break: break-word;">${stand.name}</h3>
-            <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4; word-break: break-word;"><strong>주소:</strong> ${stand.address || '없음'}</p>
+            <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4; word-break: break-word;"><strong>주소:</strong> <a href="${naverMapUrl}" target="_blank" style="color: #03c75a; text-decoration: none;">${stand.address || '없음'} <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i></a></p>
             <p style="margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4;"><strong>지역:</strong> ${stand.region || '없음'}</p>
             ${stand.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666; line-height: 1.4; word-break: break-word;">${stand.description}</p>` : ''}
+            <button onclick="window.openRoadview(${stand.latitude}, ${stand.longitude})" style="margin-top: 8px; padding: 6px 12px; background: #03c75a; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; width: 100%;"><i class="fas fa-street-view"></i> 로드뷰</button>
           </div>
         `
       };
