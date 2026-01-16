@@ -283,6 +283,10 @@ function StandForm() {
       
       alert('게시대가 저장되었습니다.');
       
+      // 기존 게시대 목록 다시 로드
+      const data = await standsAPI.getAll();
+      setExistingStands(data);
+      
       // 폼 초기화 (지역은 유지, 나머지만 초기화)
       setFormData(prev => ({
         name: '',
