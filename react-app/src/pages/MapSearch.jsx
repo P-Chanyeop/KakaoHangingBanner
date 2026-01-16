@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { standsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -270,8 +270,8 @@ function MapSearch() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  // 지도에 표시할 마커 데이터 변환
-  const mapMarkers = filteredStands
+  // 지도에 표시할 마커 데이터 변환 (메모이제이션)
+  const mapMarkers = useMemo(() => filteredStands
     .filter(stand => stand.latitude && stand.longitude)
     .map(stand => {
       const imageUrl = stand.imageUrl;
@@ -295,7 +295,7 @@ function MapSearch() {
           </div>
         `
       };
-    });
+    }), [filteredStands]);
 
   return (
     <div className="map-search-page">

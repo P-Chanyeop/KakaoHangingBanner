@@ -25,9 +25,8 @@ function NaverMap({
   const labelsRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
-  const [roadviewAvailable, setRoadviewAvailable] = useState(true);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
-  const [pov, setPov] = useState({ pan: 0 });
+  const roadviewAvailableRef = useRef(true);
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -103,11 +102,7 @@ function NaverMap({
 
           // 파노라마 상태 이벤트
           window.naver.maps.Event.addListener(panoInstance.current, 'pano_status', function(status) {
-            if (status === 'ERROR') {
-              setRoadviewAvailable(false);
-            } else {
-              setRoadviewAvailable(true);
-            }
+            roadviewAvailableRef.current = (status !== 'ERROR');
           });
 
           // 파노라마 변경 이벤트 (위치 변경 시 미니맵 업데이트)
@@ -121,8 +116,18 @@ function NaverMap({
 
           // 파노라마 시야 변경 이벤트 (방향 변경 시 마커 회전)
           window.naver.maps.Event.addListener(panoInstance.current, 'pov_changed', function() {
-            const currentPov = panoInstance.current.getPov();
-            setPov({ pan: currentPov.pan });
+            if (minimapMarkerRef.current) {
+              const currentPov = panoInstance.current.getPov();
+              minimapMarkerRef.current.setIcon({
+                content: `<div style="transform: rotate(${currentPov.pan}deg); transform-origin: center;">
+                  <svg width="24" height="24" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" fill="#03c75a" stroke="white" stroke-width="2"/>
+                    <polygon points="12,2 16,10 12,8 8,10" fill="white"/>
+                  </svg>
+                </div>`,
+                anchor: new window.naver.maps.Point(12, 12)
+              });
+            }
           });
 
           // PanoramaLayer 초기화 (selector 모드용)
@@ -132,7 +137,7 @@ function NaverMap({
 
         } catch (error) {
           console.error('파노라마 초기화 오류:', error);
-          setRoadviewAvailable(false);
+          roadviewAvailableRef.current = false;
         }
       }
 
@@ -206,20 +211,6 @@ function NaverMap({
       }
     });
   }, [showRoadview]);
-
-  // 미니맵 마커 방향 업데이트
-  useEffect(() => {
-    if (!minimapMarkerRef.current || !window.naver) return;
-    minimapMarkerRef.current.setIcon({
-      content: `<div style="transform: rotate(${pov.pan}deg); transform-origin: center;">
-        <svg width="24" height="24" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" fill="#03c75a" stroke="white" stroke-width="2"/>
-          <polygon points="12,2 16,10 12,8 8,10" fill="white"/>
-        </svg>
-      </div>`,
-      anchor: new window.naver.maps.Point(12, 12)
-    });
-  }, [pov.pan]);
 
   // 중심 이동 및 줌 레벨 변경
   useEffect(() => {
@@ -439,11 +430,14 @@ function NaverMap({
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', ...style }}>
+    <div ref={containerRef} style={{ position: 'relative', ...style, overflow: 'hidden' }}>
       {/* 지도 */}
       <div
         ref={mapRef}
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100%',
           height: '100%',
           display: isRoadviewOpen ? 'none' : 'block'
@@ -455,6 +449,9 @@ function NaverMap({
         <div
           ref={panoRef}
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
             width: '100%',
             height: '100%',
             display: isRoadviewOpen ? 'block' : 'none'
@@ -475,7 +472,7 @@ function NaverMap({
             border: '3px solid white',
             borderRadius: '8px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-            zIndex: 1050,
+            zIndex: 10000,
             display: isRoadviewOpen ? 'block' : 'none'
           }}
         ></div>
@@ -486,12 +483,11 @@ function NaverMap({
         <button
           type="button"
           onClick={toggleRoadview}
-          disabled={!roadviewAvailable && isRoadviewOpen}
           style={{
             position: 'absolute',
             top: '10px',
             right: '10px',
-            zIndex: 1100,
+            zIndex: 10001,
             padding: '10px 15px',
             backgroundColor:
               roadviewMode === 'selector'
@@ -502,16 +498,13 @@ function NaverMap({
             borderRadius: '5px',
             fontSize: '14px',
             fontWeight: 'bold',
-            cursor: roadviewAvailable || !isRoadviewOpen ? 'pointer' : 'not-allowed',
+            cursor: 'pointer',
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            transition: 'all 0.3s ease',
-            opacity: (!roadviewAvailable && isRoadviewOpen) ? 0.5 : 1
+            transition: 'all 0.3s ease'
           }}
           onMouseEnter={(e) => {
-            if (roadviewAvailable || !isRoadviewOpen) {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
-            }
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
@@ -549,28 +542,6 @@ function NaverMap({
         </div>
       )}
 
-      {/* 로드뷰 사용 불가 안내 */}
-      {!roadviewAvailable && isRoadviewOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          zIndex: 999,
-          textAlign: 'center'
-        }}>
-          <p style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: 'bold' }}>
-            이 위치에서는 로드뷰를 사용할 수 없습니다
-          </p>
-          <p style={{ margin: 0, fontSize: '14px' }}>
-            다른 위치로 이동해주세요
-          </p>
-        </div>
-      )}
     </div>
   );
 }

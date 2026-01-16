@@ -130,7 +130,7 @@ function UnifiedMap({
             ? { bottom: '1rem', right: '1rem' }
             : { top: '1rem', left: '50%', transform: 'translateX(-50%)' }
           ),
-          zIndex: 1000
+          zIndex: 10002
         }}>
           <MapTabs
             activeProvider={mapProvider}

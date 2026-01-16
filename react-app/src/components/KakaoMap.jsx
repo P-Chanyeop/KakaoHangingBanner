@@ -13,14 +13,18 @@ function KakaoMap({
 }) {
   const mapRef = useRef(null);
   const roadviewRef = useRef(null);
+  const minimapRef = useRef(null);
   const mapInstance = useRef(null);
   const roadviewInstance = useRef(null);
+  const minimapInstance = useRef(null);
+  const minimapMarkerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
   const isSelectingRoadviewRef = useRef(false); // ref로 상태 추적
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
   const [roadviewAvailable, setRoadviewAvailable] = useState(true);
+  const [viewAngle, setViewAngle] = useState(0);
 
   // ref 동기화
   useEffect(() => {
@@ -71,6 +75,21 @@ function KakaoMap({
         } else {
           roadviewInstance.current.setPanoId(panoId, new window.kakao.maps.LatLng(center.lat, center.lng));
         }
+      });
+
+      // 로드뷰 위치 변경 이벤트 (미니맵 업데이트)
+      window.kakao.maps.event.addListener(roadviewInstance.current, 'position_changed', function() {
+        const pos = roadviewInstance.current.getPosition();
+        if (minimapInstance.current && minimapMarkerRef.current) {
+          minimapInstance.current.setCenter(pos);
+          minimapMarkerRef.current.setPosition(pos);
+        }
+      });
+
+      // 로드뷰 시점 변경 이벤트 (마커 방향 업데이트)
+      window.kakao.maps.event.addListener(roadviewInstance.current, 'viewpoint_changed', function() {
+        const viewpoint = roadviewInstance.current.getViewpoint();
+        setViewAngle(viewpoint.pan);
       });
     }
 
@@ -200,6 +219,85 @@ function KakaoMap({
     });
   }, [markers]);
 
+  // 미니맵 초기화 (한 번만)
+  useEffect(() => {
+    if (!showRoadview || !minimapRef.current || !window.kakao) return;
+    if (minimapInstance.current) return;
+
+    const pos = new window.kakao.maps.LatLng(center.lat, center.lng);
+    
+    minimapInstance.current = new window.kakao.maps.Map(minimapRef.current, {
+      center: pos,
+      level: 3,
+      draggable: true,
+      scrollwheel: true,
+      disableDoubleClick: true
+    });
+
+    // 방향 표시 마커 (CustomOverlay)
+    const markerContent = document.createElement('div');
+    markerContent.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="2"/>
+        <polygon points="12,2 16,10 12,8 8,10" fill="white"/>
+      </svg>
+    `;
+    markerContent.style.transform = 'rotate(0deg)';
+    markerContent.style.transformOrigin = 'center';
+
+    minimapMarkerRef.current = new window.kakao.maps.CustomOverlay({
+      position: pos,
+      content: markerContent,
+      yAnchor: 0.5,
+      xAnchor: 0.5
+    });
+    minimapMarkerRef.current.setMap(minimapInstance.current);
+    minimapMarkerRef.current._content = markerContent;
+
+    // 미니맵 클릭 시 해당 위치로 로드뷰 이동
+    window.kakao.maps.event.addListener(minimapInstance.current, 'click', function(mouseEvent) {
+      if (roadviewInstance.current) {
+        const latlng = mouseEvent.latLng;
+        const roadviewClient = new window.kakao.maps.RoadviewClient();
+        roadviewClient.getNearestPanoId(latlng, 50, function(panoId) {
+          if (panoId !== null) {
+            roadviewInstance.current.setPanoId(panoId, latlng);
+          }
+        });
+      }
+    });
+  }, [showRoadview]);
+
+  // 로드뷰 열릴 때 미니맵 relayout
+  useEffect(() => {
+    if (isRoadviewOpen && minimapInstance.current) {
+      setTimeout(() => {
+        minimapInstance.current.relayout();
+        if (roadviewInstance.current) {
+          const pos = roadviewInstance.current.getPosition();
+          minimapInstance.current.setCenter(pos);
+          if (minimapMarkerRef.current) {
+            minimapMarkerRef.current.setPosition(pos);
+          }
+        }
+      }, 100);
+    }
+  }, [isRoadviewOpen]);
+
+  // 미니맵 마커 방향 업데이트
+  useEffect(() => {
+    if (!minimapMarkerRef.current?._content) return;
+    minimapMarkerRef.current._content.style.transform = `rotate(${viewAngle}deg)`;
+  }, [viewAngle]);
+
+  // 전역 로드뷰 열기 함수 등록 (인포윈도우 버튼용)
+  useEffect(() => {
+    window.openRoadview = (lat, lng) => {
+      openRoadviewAt({ lat, lng });
+    };
+    return () => { delete window.openRoadview; };
+  }, []);
+
   // 로드뷰 열기 함수
   const openRoadviewAt = (coords) => {
     if (!roadviewInstance.current || !window.kakao.maps.RoadviewClient) return;
@@ -281,6 +379,25 @@ function KakaoMap({
           style={{
             width: '100%',
             height: '100%',
+            display: isRoadviewOpen ? 'block' : 'none'
+          }}
+        ></div>
+      )}
+
+      {/* 미니맵 (로드뷰 열릴 때만 표시) */}
+      {showRoadview && (
+        <div
+          ref={minimapRef}
+          style={{
+            position: 'absolute',
+            top: '60px',
+            right: '10px',
+            width: '180px',
+            height: '140px',
+            border: '3px solid white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            zIndex: 1050,
             display: isRoadviewOpen ? 'block' : 'none'
           }}
         ></div>
