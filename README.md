@@ -203,7 +203,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
 
 # 관리자 계정 설정
 admin.username=admin
-admin.password=Xy3$aB9#kL2m
+admin.password=admin password
 
 # JWT 설정
 jwt.secret=mySecretKeyForJWTTokenGenerationAndValidationMustBeLongEnoughForHS256Algorithm
@@ -244,7 +244,7 @@ java -jar build/libs/mapboard-0.0.1-SNAPSHOT.jar
 
 ### 기본 계정
 
-- **관리자**: `admin` / `Xy3$aB9#kL2m`
+- **관리자**: `admin` / `[admin password]`
 - 일반 사용자는 회원가입 필요
 
 ### API 테스트
@@ -452,3 +452,4 @@ export JWT_SECRET=your_jwt_secret_key_here
 - [southkorea/southkorea-maps](https://github.com/southkorea/southkorea-maps) - 행정구역 지도 데이터
 - Kakao Maps, Naver Maps - 지도 API 제공
 - OpenStreetMap & Leaflet - 오픈소스 지도 솔루션
+
