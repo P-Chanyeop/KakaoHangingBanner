@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 function KakaoMap({
   center = { lat: 36.5, lng: 127.5 },
@@ -9,7 +9,8 @@ function KakaoMap({
   showRoadview = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
   roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
-  showPermanentLabels = false
+  showPermanentLabels = false,
+  useViewportRendering = false
 }) {
   const mapRef = useRef(null);
   const roadviewRef = useRef(null);
@@ -20,11 +21,13 @@ function KakaoMap({
   const minimapMarkerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
+  const allMarkersDataRef = useRef([]);
   const isSelectingRoadviewRef = useRef(false); // ref로 상태 추적
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
   const [roadviewAvailable, setRoadviewAvailable] = useState(true);
   const [viewAngle, setViewAngle] = useState(0);
+  const [visibleMarkers, setVisibleMarkers] = useState([]);
 
   // ref 동기화
   useEffect(() => {
@@ -153,6 +156,43 @@ function KakaoMap({
     }
   }, []); // 빈 의존성 배열로 초기 마운트 시에만 실행
 
+  // 뷰포트 내 마커 필터링
+  const updateVisibleMarkers = useCallback(() => {
+    if (!mapInstance.current || !window.kakao || !useViewportRendering) return;
+    
+    const bounds = mapInstance.current.getBounds();
+    const filtered = allMarkersDataRef.current.filter(m => {
+      const pos = new window.kakao.maps.LatLng(m.lat, m.lng);
+      return bounds.contain(pos);
+    });
+    setVisibleMarkers(filtered);
+  }, [useViewportRendering]);
+
+  // 뷰포트 렌더링: 지도 이동/줌 이벤트 리스너
+  useEffect(() => {
+    if (!mapInstance.current || !window.kakao || !useViewportRendering) return;
+
+    const idleListener = window.kakao.maps.event.addListener(mapInstance.current, 'idle', updateVisibleMarkers);
+    
+    // 초기 실행
+    updateVisibleMarkers();
+
+    return () => {
+      window.kakao.maps.event.removeListener(idleListener);
+    };
+  }, [useViewportRendering, updateVisibleMarkers]);
+
+  // markers prop 변경 시 저장
+  useEffect(() => {
+    allMarkersDataRef.current = markers;
+    if (useViewportRendering) {
+      updateVisibleMarkers();
+    }
+  }, [markers, useViewportRendering, updateVisibleMarkers]);
+
+  // 실제 렌더링할 마커 결정
+  const markersToRender = useViewportRendering ? visibleMarkers : markers;
+
   // 마커 업데이트
   useEffect(() => {
     if (!mapInstance.current || !window.kakao) return;
@@ -166,7 +206,7 @@ function KakaoMap({
     labelsRef.current = [];
 
     // 새 마커 추가
-    markers.forEach(markerData => {
+    markersToRender.forEach(markerData => {
       const markerPosition = new window.kakao.maps.LatLng(markerData.lat, markerData.lng);
       const marker = new window.kakao.maps.Marker({
         position: markerPosition,
@@ -206,10 +246,8 @@ function KakaoMap({
 
         window.kakao.maps.event.addListener(marker, 'click', function() {
           if (infowindow.getMap()) {
-            // 이미 열려있으면 닫기
             infowindow.close();
           } else {
-            // 닫혀있으면 열기
             infowindow.open(mapInstance.current, marker);
           }
         });
@@ -217,7 +255,7 @@ function KakaoMap({
 
       markersRef.current.push(marker);
     });
-  }, [markers]);
+  }, [markersToRender, showPermanentLabels]);
 
   // 미니맵 초기화 (한 번만)
   useEffect(() => {

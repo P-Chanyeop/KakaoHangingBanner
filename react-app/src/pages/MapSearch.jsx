@@ -428,6 +428,7 @@ function MapSearch() {
             roadviewMode="selector"
             tabPosition="bottom-right"
             showPermanentLabels={true}
+            useViewportRendering={true}
             style={{ width: '100%', height: '100%' }}
           />
         </div>

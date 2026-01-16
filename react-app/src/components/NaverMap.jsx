@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 function NaverMap({
   center = { lat: 36.5, lng: 127.5 },
@@ -10,7 +10,8 @@ function NaverMap({
   autoFitBounds = true,
   roadviewMode = 'toggle', // 'toggle' or 'selector'
   roadviewTarget = null, // 로드뷰를 보여줄 특정 좌표 (핀 위치)
-  showPermanentLabels = false
+  showPermanentLabels = false,
+  useViewportRendering = false
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -23,10 +24,12 @@ function NaverMap({
   const minimapMarkerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
+  const allMarkersDataRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
   const roadviewAvailableRef = useRef(true);
+  const [visibleMarkers, setVisibleMarkers] = useState([]);
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -220,6 +223,42 @@ function NaverMap({
     }
   }, [center.lat, center.lng, zoom]);
 
+  // 뷰포트 내 마커 필터링
+  const updateVisibleMarkers = useCallback(() => {
+    if (!mapInstance.current || !window.naver || !useViewportRendering) return;
+    
+    const bounds = mapInstance.current.getBounds();
+    const filtered = allMarkersDataRef.current.filter(m => 
+      bounds.hasLatLng(new window.naver.maps.LatLng(m.lat, m.lng))
+    );
+    setVisibleMarkers(filtered);
+  }, [useViewportRendering]);
+
+  // 뷰포트 렌더링: 지도 이동/줌 이벤트 리스너
+  useEffect(() => {
+    if (!mapInstance.current || !window.naver || !useViewportRendering) return;
+
+    const idleListener = window.naver.maps.Event.addListener(mapInstance.current, 'idle', updateVisibleMarkers);
+    
+    // 초기 실행
+    updateVisibleMarkers();
+
+    return () => {
+      window.naver.maps.Event.removeListener(idleListener);
+    };
+  }, [useViewportRendering, updateVisibleMarkers]);
+
+  // markers prop 변경 시 저장
+  useEffect(() => {
+    allMarkersDataRef.current = markers;
+    if (useViewportRendering) {
+      updateVisibleMarkers();
+    }
+  }, [markers, useViewportRendering, updateVisibleMarkers]);
+
+  // 실제 렌더링할 마커 결정
+  const markersToRender = useViewportRendering ? visibleMarkers : markers;
+
   // 마커 업데이트
   useEffect(() => {
     if (!mapInstance.current || !window.naver) return;
@@ -233,7 +272,7 @@ function NaverMap({
     labelsRef.current = [];
 
     // 새 마커 추가
-    markers.forEach((markerData, index) => {
+    markersToRender.forEach((markerData, index) => {
       const position = new window.naver.maps.LatLng(markerData.lat, markerData.lng);
 
       const marker = new window.naver.maps.Marker({
@@ -308,15 +347,15 @@ function NaverMap({
       markersRef.current.push(marker);
     });
 
-    // 마커가 있으면 범위에 맞게 조정 (autoFitBounds가 true일 때만)
-    if (autoFitBounds && markers.length > 0 && window.naver) {
+    // 마커가 있으면 범위에 맞게 조정 (autoFitBounds가 true이고 뷰포트 렌더링이 아닐 때만)
+    if (autoFitBounds && markers.length > 0 && window.naver && !useViewportRendering) {
       const bounds = new window.naver.maps.LatLngBounds();
       markers.forEach(markerData => {
         bounds.extend(new window.naver.maps.LatLng(markerData.lat, markerData.lng));
       });
       mapInstance.current.fitBounds(bounds, { padding: { top: 50, right: 50, bottom: 50, left: 50 } });
     }
-  }, [markers, autoFitBounds]);
+  }, [markersToRender, autoFitBounds, showPermanentLabels]);
 
   // 지도 전환 시에만 roadviewTarget 위치로 이동 (초기 마운트 시)
   useEffect(() => {

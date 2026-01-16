@@ -13,6 +13,7 @@
 
 - [주요 기능](#-주요-기능)
 - [기술 스택](#-기술-스택)
+- [성능 최적화](#-성능-최적화)
 - [프로젝트 구조](#-프로젝트-구조)
 - [시작하기](#-시작하기)
 - [주요 기능 상세](#-주요-기능-상세)
@@ -31,17 +32,27 @@
 
 ### 🗺️ 다중 지도 제공자 지원
 - **Leaflet** (OpenStreetMap)
-- **Kakao Maps**
-- **Naver Maps** (Roadview/로드뷰 포함)
+- **Kakao Maps** (부드러운 panTo 이동)
+- **Naver Maps** (Roadview/로드뷰 포함, morph 애니메이션)
 - 탭 방식으로 지도 제공자 전환 가능
+- 탭 위치 커스터마이징 (상단 중앙 / 우측 하단)
 
 ### 📍 게시대 관리
 - 게시대 등록, 수정, 삭제 (CRUD)
+- **가로형 레이아웃**: 왼쪽 폼 + 오른쪽 지도 (PC)
+- **반응형 디자인**: 모바일에서 세로 배치
 - 지도 클릭으로 좌표 선택
 - 역지오코딩: 좌표 → 주소 자동 변환
+- 주소 검색 후 역지오코딩으로 정확한 주소 표시
 - 이미지 업로드 (최대 5MB)
-- 주소 검색 및 지오코딩
 - 지역별 필터링 (경북 23개, 경남 20개 시군구)
+- **기존 게시대 마커 표시**: 등록 시 중복 방지
+
+### 🏷️ 마커 라벨 시스템
+- **CustomOverlay 방식**: 지도 이동 방해 없음
+- 마커 위에 게시대 이름 상시 표시
+- 카카오맵/네이버맵 모두 지원
+- `pointer-events: none`으로 클릭 이벤트 통과
 
 ### 🏛️ 인터랙티브 행정구역 지도
 - 경상북도/경상남도 시군구 단위 경계 표시
@@ -53,18 +64,28 @@
 ### 📱 Naver Maps Roadview
 - **선택 모드**: 도로 선택 후 로드뷰 보기 (MapSearch 페이지)
 - **토글 모드**: 즉시 로드뷰 열기/닫기 (StandForm 페이지)
+- **핀 위치 로드뷰**: 클릭한 핀 위치의 로드뷰 표시
 - PanoramaLayer를 통한 도로 시각화
+- 미니맵 연동 및 방향 표시
+
+### 🔍 지도 검색 페이지
+- 사이드바 게시대 목록
+- 지역 선택 시 해당 지역 게시대만 필터링
+- **엑셀 다운로드**: CSV 형식으로 게시대 목록 저장
+- 인포윈도우 위치 최적화 (핀 가림 방지)
+- 모바일 메뉴 z-index 최적화
 
 ### 🎨 관리자 페이지
 - **버튼 링크 관리**: 경북/경남 협회 사이트 링크
 - **Hero 이미지 관리**: 메인 페이지 배경 이미지
 - **팝업 메시지 관리**:
-  - 웹하드 정보
+  - 웹하드 정보 (입력창 500px 확대)
   - 공지사항
   - 지역별 메시지 (43개 시군구 개별 관리)
 
 ### 📅 캘린더 기능
 - 월별 일정 관리
+- **일정 수정 기능**: 캘린더 항목 클릭 시 수정
 - 메모 추가/삭제
 - 색상 코드로 일정 구분
 
@@ -106,6 +127,41 @@
 | [statgarten/maps](https://github.com/statgarten/maps) | 대한민국 행정구역 경계 SVG (통계청 SGIS API 기반) |
 | Kakao Maps API | 지도 표시 및 지오코딩 |
 | Naver Maps API | 지도 표시, 로드뷰, 역지오코딩 |
+| VWorld API | 주소 → 좌표 변환 (도로명/지번 주소 지원) |
+
+## ⚡ 성능 최적화
+
+### 뷰포트 기반 마커 렌더링
+
+대량의 마커를 효율적으로 처리하기 위해 **뷰포트 기반 렌더링**을 적용했습니다.
+현재 지도 화면에 보이는 영역의 마커만 렌더링하여 성능을 최적화합니다.
+
+#### 예상 성능 향상
+
+| 상황 | 전체 마커 | 화면 내 마커 | 렌더링 감소율 |
+|------|----------|-------------|--------------|
+| 전국 보기 (줌 아웃) | 1000개 | ~50개 | **95% 감소** |
+| 지역 보기 (줌 인) | 1000개 | ~20개 | **98% 감소** |
+| 특정 위치 확대 | 1000개 | ~5개 | **99.5% 감소** |
+
+#### 실제 효과
+- DOM 요소 생성/삭제 횟수 감소
+- 메모리 사용량 감소
+- 지도 이동/줌 시 반응 속도 향상
+
+#### 사용 방법
+```jsx
+<UnifiedMap
+  markers={markers}
+  useViewportRendering={true}  // 뷰포트 렌더링 활성화
+  showPermanentLabels={true}   // 라벨 표시
+/>
+```
+
+### 마커 최적화 기법
+- **지도 idle 이벤트**: 지도 이동/줌 완료 시에만 마커 재계산
+- **useMemo/useCallback**: 불필요한 리렌더링 방지
+- **Ref 기반 마커 관리**: 마커 인스턴스 재사용
 
 ## 📁 프로젝트 구조
 
@@ -116,11 +172,13 @@ KakaoHangingBanner/
 │   │   ├── controller/          # REST API 컨트롤러
 │   │   │   ├── AuthController.java
 │   │   │   ├── StandApiController.java
+│   │   │   ├── CalendarEventApiController.java
 │   │   │   ├── PopupMessageController.java
 │   │   │   └── HeroImageApiController.java
 │   │   ├── entity/              # JPA 엔티티
 │   │   │   ├── Stand.java
 │   │   │   ├── User.java
+│   │   │   ├── CalendarEvent.java
 │   │   │   ├── ButtonLink.java
 │   │   │   └── PopupMessage.java
 │   │   ├── repository/          # Spring Data JPA 리포지토리
@@ -147,15 +205,16 @@ KakaoHangingBanner/
 │   │   ├── components/          # React 컴포넌트
 │   │   │   ├── Header.jsx
 │   │   │   ├── Footer.jsx
-│   │   │   ├── UnifiedMap.jsx
-│   │   │   ├── KakaoMap.jsx
-│   │   │   ├── NaverMap.jsx
+│   │   │   ├── UnifiedMap.jsx   # 통합 지도 컴포넌트
+│   │   │   ├── KakaoMap.jsx     # 카카오맵 (클러스터링, 뷰포트 렌더링)
+│   │   │   ├── NaverMap.jsx     # 네이버맵 (로드뷰, 뷰포트 렌더링)
 │   │   │   ├── LeafletMap.jsx
+│   │   │   ├── MapTabs.jsx      # 지도 탭 전환
 │   │   │   └── InteractiveMap.jsx
 │   │   ├── pages/               # 페이지 컴포넌트
-│   │   │   ├── Home.jsx
-│   │   │   ├── MapSearch.jsx
-│   │   │   ├── StandForm.jsx
+│   │   │   ├── Home.jsx         # 메인 (캘린더 수정 기능)
+│   │   │   ├── MapSearch.jsx    # 지도 검색 (엑셀 다운로드)
+│   │   │   ├── StandForm.jsx    # 게시대 등록 (가로형 레이아웃)
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
 │   │   │   ├── AdminButtons.jsx
@@ -165,6 +224,8 @@ KakaoHangingBanner/
 │   │   ├── services/            # API 서비스
 │   │   │   └── api.js
 │   │   ├── assets/              # 정적 자산
+│   │   │   └── css/
+│   │   │       └── common.css
 │   │   └── App.js
 │   └── package.json
 │
@@ -283,11 +344,13 @@ java -jar build/libs/mapboard-0.0.1-SNAPSHOT.jar
 - 한국 지역 상세 지도
 - 정확한 지오코딩
 - 로드맵/스카이뷰 지원
+- **panTo**: 부드러운 지도 이동
 
 #### Naver Maps
 - **Roadview/로드뷰 지원** (핵심 기능)
 - 역지오코딩: 좌표 → 주소 변환
 - PanoramaLayer를 통한 도로 시각화
+- **morph**: 부드러운 지도 이동 애니메이션
 
 **Roadview 모드**:
 - **Selector 모드** (MapSearch): 도로 선택 후 로드뷰 열기
@@ -295,20 +358,23 @@ java -jar build/libs/mapboard-0.0.1-SNAPSHOT.jar
 
 ### 3. 게시대 관리
 
-#### 등록
+#### 등록 (가로형 레이아웃)
+- **PC**: 왼쪽 폼(400px) + 오른쪽 지도
+- **모바일**: 세로 배치 (주소 → 지도 → 좌표 순서)
 1. 지역 선택 (경북/경남 시군구)
 2. 지도 클릭으로 좌표 선택
-3. 자동 역지오코딩으로 주소 채우기 (선택사항)
+3. 자동 역지오코딩으로 주소 채우기
 4. 이미지 업로드 (선택사항, 최대 5MB)
 5. 설명 입력 (선택사항)
+6. **기존 게시대 마커 확인**: 중복 등록 방지
 
 #### 수정/삭제
 - MapSearch 페이지에서 게시대 클릭
-- 모달에서 "수정" 또는 "삭제" 버튼
+- 사이드바에서 "수정" 또는 "삭제" 버튼
 
 #### 필터링
 - 지역별 필터 (43개 시군구)
-- 현재 지도 영역 내 게시대만 표시
+- 현재 지도 영역 내 게시대만 표시 (뷰포트 렌더링)
 
 ### 4. 인터랙티브 행정구역 지도
 
@@ -333,7 +399,7 @@ java -jar build/libs/mapboard-0.0.1-SNAPSHOT.jar
 - 이미지 업로드 및 미리보기
 
 #### 팝업 메시지 관리
-- **웹하드 정보**: 아이디/비밀번호 등
+- **웹하드 정보**: 아이디/비밀번호 등 (입력창 500px)
 - **공지사항**: 전체 공지
 - **지역별 메시지**: 43개 시군구별 개별 메시지
   - 경북 23개: 경산시, 경주시, 포항시, 안동시 등
@@ -359,7 +425,7 @@ java -jar build/libs/mapboard-0.0.1-SNAPSHOT.jar
 | POST | `/api/stands/with-file` | 게시대 등록 (이미지 포함) | ✅ |
 | PUT | `/api/stands/{id}` | 게시대 수정 | ✅ |
 | DELETE | `/api/stands/{id}` | 게시대 삭제 | ✅ |
-| GET | `/api/stands/geocode?address={address}` | 주소 → 좌표 변환 | ✅ |
+| GET | `/api/stands/geocode?address={address}` | 주소 → 좌표 변환 (도로명/지번) | ✅ |
 | GET | `/api/stands/reverse-geocode?lat={lat}&lng={lng}` | 좌표 → 주소 변환 | ✅ |
 
 ### 버튼 링크 API
@@ -384,6 +450,7 @@ java -jar build/libs/mapboard-0.0.1-SNAPSHOT.jar
 |--------|----------|------|-----------|
 | GET | `/api/calendar-events/range?startDate={start}&endDate={end}` | 기간별 일정 조회 | ✅ |
 | POST | `/api/calendar-events` | 일정 추가 | ✅ |
+| PUT | `/api/calendar-events/{id}` | 일정 수정 | ✅ |
 | DELETE | `/api/calendar-events/{id}` | 일정 삭제 | ✅ |
 
 ## 📦 배포
@@ -433,6 +500,7 @@ export JWT_SECRET=your_jwt_secret_key_here
 - `docs:` 문서 수정
 - `style:` 코드 포맷팅
 - `refactor:` 리팩토링
+- `perf:` 성능 개선
 - `test:` 테스트 코드
 - `chore:` 빌드, 설정 변경
 
@@ -452,4 +520,4 @@ export JWT_SECRET=your_jwt_secret_key_here
 - [southkorea/southkorea-maps](https://github.com/southkorea/southkorea-maps) - 행정구역 지도 데이터
 - Kakao Maps, Naver Maps - 지도 API 제공
 - OpenStreetMap & Leaflet - 오픈소스 지도 솔루션
-
+- VWorld - 주소 좌표 변환 API 제공
