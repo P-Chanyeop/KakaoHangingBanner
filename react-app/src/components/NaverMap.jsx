@@ -30,6 +30,7 @@ function NaverMap({
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
   const roadviewAvailableRef = useRef(true);
   const [visibleMarkers, setVisibleMarkers] = useState([]);
+  const [currentZoom, setCurrentZoom] = useState(zoom);
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -81,6 +82,11 @@ function NaverMap({
         if (onMapClick) {
           onMapClick(clickCoord);
         }
+      });
+
+      // 줌 레벨 변경 이벤트 (라벨 표시 제어용)
+      window.naver.maps.Event.addListener(mapInstance.current, 'zoom_changed', function() {
+        setCurrentZoom(mapInstance.current.getZoom());
       });
 
       // 파노라마 초기화 (showRoadview가 true일 때)
@@ -282,8 +288,8 @@ function NaverMap({
         zIndex: 100
       });
 
-      // 상시 라벨 (CustomOverlay)
-      if (showPermanentLabels && markerData.title) {
+      // 상시 라벨 (CustomOverlay) - 줌 레벨 12 이상(확대)에서만 표시
+      if (showPermanentLabels && markerData.title && currentZoom >= 12) {
         const labelOverlay = new window.naver.maps.OverlayView();
         
         labelOverlay.onAdd = function() {
@@ -355,7 +361,7 @@ function NaverMap({
       });
       mapInstance.current.fitBounds(bounds, { padding: { top: 50, right: 50, bottom: 50, left: 50 } });
     }
-  }, [markersToRender, autoFitBounds, showPermanentLabels]);
+  }, [markersToRender, autoFitBounds, showPermanentLabels, currentZoom]);
 
   // 지도 전환 시에만 roadviewTarget 위치로 이동 (초기 마운트 시)
   useEffect(() => {

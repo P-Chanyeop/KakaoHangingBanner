@@ -28,6 +28,7 @@ function KakaoMap({
   const [roadviewAvailable, setRoadviewAvailable] = useState(true);
   const [viewAngle, setViewAngle] = useState(0);
   const [visibleMarkers, setVisibleMarkers] = useState([]);
+  const [currentZoom, setCurrentZoom] = useState(zoom);
 
   // ref 동기화
   useEffect(() => {
@@ -123,6 +124,11 @@ function KakaoMap({
       });
     }
 
+    // 줌 레벨 변경 이벤트 (라벨 표시 제어용)
+    window.kakao.maps.event.addListener(mapInstance.current, 'zoom_changed', function() {
+      setCurrentZoom(mapInstance.current.getLevel());
+    });
+
     return () => {
       if (mapInstance.current) {
         // 카카오맵 정리
@@ -215,8 +221,8 @@ function KakaoMap({
         map: mapInstance.current
       });
 
-      // 상시 라벨 (CustomOverlay)
-      if (showPermanentLabels && markerData.title) {
+      // 상시 라벨 (CustomOverlay) - 줌 레벨 6 이하(확대)에서만 표시
+      if (showPermanentLabels && markerData.title && currentZoom <= 6) {
         const labelContent = document.createElement('div');
         labelContent.innerHTML = markerData.title;
         labelContent.style.cssText = `
@@ -257,7 +263,7 @@ function KakaoMap({
 
       markersRef.current.push(marker);
     });
-  }, [markersToRender, showPermanentLabels]);
+  }, [markersToRender, showPermanentLabels, currentZoom]);
 
   // 미니맵 초기화 (한 번만)
   useEffect(() => {
