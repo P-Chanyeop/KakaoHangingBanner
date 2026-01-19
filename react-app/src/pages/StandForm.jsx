@@ -401,6 +401,7 @@ function StandForm() {
                 autoFitBounds={false}
                 showPermanentLabels={true}
                 roadviewTarget={roadviewTarget}
+                useViewportRendering={true}
                 style={{ width: '100%', height: '100%' }}
               />
             </div>
@@ -483,6 +484,7 @@ function StandForm() {
             autoFitBounds={false}
             showPermanentLabels={true}
             roadviewTarget={roadviewTarget}
+            useViewportRendering={true}
             style={{ width: '100%', height: '100%' }}
           />
         </div>

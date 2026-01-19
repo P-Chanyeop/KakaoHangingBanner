@@ -75,7 +75,7 @@ function KakaoMap({
       roadviewClient.getNearestPanoId(new window.kakao.maps.LatLng(center.lat, center.lng), 50, function(panoId) {
         if (panoId === null) {
           setRoadviewAvailable(false);
-        } else {
+        } else if (roadviewInstance.current) {
           roadviewInstance.current.setPanoId(panoId, new window.kakao.maps.LatLng(center.lat, center.lng));
         }
       });
@@ -172,13 +172,15 @@ function KakaoMap({
   useEffect(() => {
     if (!mapInstance.current || !window.kakao || !useViewportRendering) return;
 
-    const idleListener = window.kakao.maps.event.addListener(mapInstance.current, 'idle', updateVisibleMarkers);
+    window.kakao.maps.event.addListener(mapInstance.current, 'idle', updateVisibleMarkers);
     
     // 초기 실행
     updateVisibleMarkers();
 
     return () => {
-      window.kakao.maps.event.removeListener(idleListener);
+      if (mapInstance.current && window.kakao) {
+        window.kakao.maps.event.removeListener(mapInstance.current, 'idle', updateVisibleMarkers);
+      }
     };
   }, [useViewportRendering, updateVisibleMarkers]);
 
@@ -294,15 +296,13 @@ function KakaoMap({
 
     // 미니맵 클릭 시 해당 위치로 로드뷰 이동
     window.kakao.maps.event.addListener(minimapInstance.current, 'click', function(mouseEvent) {
-      if (roadviewInstance.current) {
-        const latlng = mouseEvent.latLng;
-        const roadviewClient = new window.kakao.maps.RoadviewClient();
-        roadviewClient.getNearestPanoId(latlng, 50, function(panoId) {
-          if (panoId !== null) {
-            roadviewInstance.current.setPanoId(panoId, latlng);
-          }
-        });
-      }
+      const latlng = mouseEvent.latLng;
+      const roadviewClient = new window.kakao.maps.RoadviewClient();
+      roadviewClient.getNearestPanoId(latlng, 50, function(panoId) {
+        if (panoId !== null && roadviewInstance.current) {
+          roadviewInstance.current.setPanoId(panoId, latlng);
+        }
+      });
     });
   }, [showRoadview]);
 
@@ -347,12 +347,12 @@ function KakaoMap({
       if (panoId === null) {
         setRoadviewAvailable(false);
         alert('이 위치에서는 로드뷰를 사용할 수 없습니다.');
-      } else {
+      } else if (roadviewInstance.current) {
         setRoadviewAvailable(true);
         roadviewInstance.current.setPanoId(panoId, position);
         setIsRoadviewOpen(true);
         if (roadviewMode === 'selector') {
-          setIsSelectingRoadview(false); // 로드뷰가 열리면 선택 모드 해제
+          setIsSelectingRoadview(false);
         }
       }
     });

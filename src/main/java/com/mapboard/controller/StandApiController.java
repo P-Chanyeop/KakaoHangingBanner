@@ -345,64 +345,54 @@ public class StandApiController {
         logger.info("GET /api/stands/geocode 요청 받음. address={}", address);
 
         try {
-            // 주소 전처리
-            String cleanAddress = preprocessAddress(address);
-            logger.info("전처리된 주소: {}", cleanAddress);
-            
-            // VWorld API 2.0 호출 (공식 예제 형식)
             String apiKey = "27CEA50A-6F66-37A6-8D0D-D9F306F30994";
+            String encodedAddress = java.net.URLEncoder.encode(address, "UTF-8");
             
-            StringBuilder sb = new StringBuilder("https://api.vworld.kr/req/address");
-            sb.append("?service=address");
-            sb.append("&request=getCoord");
-            sb.append("&format=json");
-            sb.append("&crs=epsg:4326");
-            sb.append("&key=").append(apiKey);
-            sb.append("&type=road");
-            sb.append("&address=").append(java.net.URLEncoder.encode(cleanAddress, "UTF-8"));
+            // 도로명주소로 먼저 시도, 실패하면 지번주소로 재시도
+            String[] types = {"road", "parcel"};
             
-            String apiUrl = sb.toString();
-            logger.info("VWorld API 2.0 호출: {}", apiUrl);
+            for (String type : types) {
+                String apiUrl = "https://api.vworld.kr/req/address?service=address&request=getCoord&format=json&crs=epsg:4326&key=" 
+                    + apiKey + "&type=" + type + "&address=" + encodedAddress;
+                
+                logger.info("VWorld API 호출 (type={}): {}", type, apiUrl);
 
-            // API 호출 (예제와 동일한 방식)
-            java.net.URL url = new java.net.URL(apiUrl);
-            java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(url.openStream(), java.nio.charset.StandardCharsets.UTF_8)
-            );
-            
-            // JSON 파싱 (예제와 동일)
-            org.json.simple.parser.JSONParser jspa = new org.json.simple.parser.JSONParser();
-            org.json.simple.JSONObject jsob = (org.json.simple.JSONObject) jspa.parse(reader);
-            org.json.simple.JSONObject jsrs = (org.json.simple.JSONObject) jsob.get("response");
-            
-            logger.info("VWorld API 2.0 응답: {}", jsob.toString());
-            
-            // 응답 상태 확인
-            String status = (String) jsrs.get("status");
-            if ("OK".equals(status)) {
-                org.json.simple.JSONObject jsResult = (org.json.simple.JSONObject) jsrs.get("result");
-                org.json.simple.JSONObject jspoint = (org.json.simple.JSONObject) jsResult.get("point");
+                java.net.URL url = new java.net.URL(apiUrl);
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(url.openStream(), java.nio.charset.StandardCharsets.UTF_8)
+                );
+                
+                org.json.simple.parser.JSONParser jspa = new org.json.simple.parser.JSONParser();
+                org.json.simple.JSONObject jsob = (org.json.simple.JSONObject) jspa.parse(reader);
+                org.json.simple.JSONObject jsrs = (org.json.simple.JSONObject) jsob.get("response");
+                
+                logger.info("VWorld API 응답 (type={}): {}", type, jsob.toString());
+                
+                if ("OK".equals(jsrs.get("status"))) {
+                    org.json.simple.JSONObject jsResult = (org.json.simple.JSONObject) jsrs.get("result");
+                    org.json.simple.JSONObject jspoint = (org.json.simple.JSONObject) jsResult.get("point");
 
+                    double longitude = Double.parseDouble(jspoint.get("x").toString());
+                    double latitude = Double.parseDouble(jspoint.get("y").toString());
 
-                double longitude = Double.parseDouble(jspoint.get("x").toString());
-                double latitude = Double.parseDouble(jspoint.get("y").toString());
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("latitude", latitude);
+                    response.put("longitude", longitude);
+                    response.put("address", address);
 
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("latitude", latitude);
-                response.put("longitude", longitude);
-                response.put("address", cleanAddress);
-
-                logger.info("좌표 변환 성공: lat={}, lng={}", latitude, longitude);
-                return ResponseEntity.ok(response);
-            } else {
-                // 실패 응답
-                logger.warn("주소를 찾을 수 없음: {}", cleanAddress);
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("error", "주소를 찾을 수 없습니다. 주소를 확인해주세요.");
-                return ResponseEntity.status(404).body(errorResponse);
+                    logger.info("좌표 변환 성공 (type={}): lat={}, lng={}", type, latitude, longitude);
+                    return ResponseEntity.ok(response);
+                }
             }
+            
+            // 둘 다 실패
+            logger.warn("주소를 찾을 수 없음: {}", address);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "주소를 찾을 수 없습니다. 주소를 확인해주세요.");
+            return ResponseEntity.status(404).body(errorResponse);
+            
         } catch (Exception e) {
             logger.error("지오코딩 실패", e);
             Map<String, Object> error = new HashMap<>();
@@ -422,15 +412,11 @@ public class StandApiController {
         logger.info("GET /api/stands/geocode-v1 요청 받음. address={}", address);
 
         try {
-            // 주소 전처리
-            String cleanAddress = preprocessAddress(address);
-            logger.info("전처리된 주소: {}", cleanAddress);
-            
             // VWorld API 1.0 호출 (도로명주소)
             String apiKey = "27CEA50A-6F66-37A6-8D0D-D9F306F30994";
             String apiUrl = String.format(
                 "https://apis.vworld.kr/new2coord.do?q=%s&output=json&epsg=epsg:4326&apiKey=%s&domain=http://localhost:8081",
-                java.net.URLEncoder.encode(cleanAddress, "UTF-8"),
+                java.net.URLEncoder.encode(address, "UTF-8"),
                 apiKey
             );
 
@@ -471,7 +457,7 @@ public class StandApiController {
                             response.put("success", true);
                             response.put("latitude", latitude);
                             response.put("longitude", longitude);
-                            response.put("address", cleanAddress);
+                            response.put("address", address);
 
                             logger.info("좌표 변환 성공: lat={}, lng={}", latitude, longitude);
                             return ResponseEntity.ok(response);
@@ -481,7 +467,7 @@ public class StandApiController {
             }
 
             // 실패 응답
-            logger.warn("주소를 찾을 수 없음: {}", cleanAddress);
+            logger.warn("주소를 찾을 수 없음: {}", address);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("error", "주소를 찾을 수 없습니다.");

@@ -33,6 +33,8 @@ function UnifiedMap({
   const leafletInstanceRef = useRef(null);
   const leafletMarkersRef = useRef([]);
 
+  const [leafletBoundsChanged, setLeafletBoundsChanged] = useState(0);
+
   // Leaflet 지도 초기화
   useEffect(() => {
     if (mapProvider === 'leaflet' && leafletMapRef.current && !leafletInstanceRef.current) {
@@ -61,6 +63,13 @@ function UnifiedMap({
         });
       }
 
+      // 뷰포트 렌더링용 이벤트
+      if (useViewportRendering) {
+        leafletInstanceRef.current.on('moveend', () => {
+          setLeafletBoundsChanged(prev => prev + 1);
+        });
+      }
+
       // 지도 크기 재계산
       setTimeout(() => {
         if (leafletInstanceRef.current) {
@@ -84,6 +93,13 @@ function UnifiedMap({
     }
   }, [center, zoom, mapProvider]);
 
+  // Leaflet 뷰포트 내 마커 필터링
+  const getVisibleLeafletMarkers = () => {
+    if (!leafletInstanceRef.current || !useViewportRendering) return markers;
+    const bounds = leafletInstanceRef.current.getBounds();
+    return markers.filter(m => bounds.contains([m.lat, m.lng]));
+  };
+
   // Leaflet 마커 업데이트
   useEffect(() => {
     if (mapProvider === 'leaflet' && leafletInstanceRef.current) {
@@ -91,8 +107,11 @@ function UnifiedMap({
       leafletMarkersRef.current.forEach(marker => leafletInstanceRef.current.removeLayer(marker));
       leafletMarkersRef.current = [];
 
+      // 뷰포트 렌더링 적용
+      const visibleMarkers = getVisibleLeafletMarkers();
+
       // 새 마커 추가
-      markers.forEach(markerData => {
+      visibleMarkers.forEach(markerData => {
         const marker = L.marker([markerData.lat, markerData.lng])
           .addTo(leafletInstanceRef.current);
 
@@ -109,7 +128,7 @@ function UnifiedMap({
         leafletInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
       }
     }
-  }, [markers, mapProvider, autoFitBounds]);
+  }, [markers, mapProvider, autoFitBounds, leafletBoundsChanged, useViewportRendering]);
 
   // 지도 제공자 변경 시 크기 재계산
   useEffect(() => {

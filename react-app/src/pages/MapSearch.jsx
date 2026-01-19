@@ -75,8 +75,8 @@ function MapSearch() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mapCenter, setMapCenter] = useState({ lat: 36.5, lng: 127.5 });
-  const [mapZoom, setMapZoom] = useState(7);
+  const [mapCenter, setMapCenter] = useState({ lat: 35.9, lng: 128.6 }); // 경상도 중심
+  const [mapZoom, setMapZoom] = useState(10); // 초기 확대 (렉 방지)
   const [selectedStand, setSelectedStand] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFormData, setEditFormData] = useState({
