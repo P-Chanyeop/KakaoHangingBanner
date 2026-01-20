@@ -79,6 +79,9 @@ function MapSearch() {
   const [mapZoom, setMapZoom] = useState(10); // 초기 확대 (렉 방지)
   const [selectedStand, setSelectedStand] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [placeKeyword, setPlaceKeyword] = useState('');
+  const [placeResults, setPlaceResults] = useState([]);
+  const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
     region: '',
@@ -128,6 +131,28 @@ function MapSearch() {
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  // 장소 검색 (카카오 Places API)
+  const searchPlace = () => {
+    if (!placeKeyword.trim() || !window.kakao?.maps?.services) return;
+    const ps = new window.kakao.maps.services.Places();
+    ps.keywordSearch(placeKeyword, (data, status) => {
+      if (status === window.kakao.maps.services.Status.OK) {
+        setPlaceResults(data.slice(0, 10));
+        setShowPlaceResults(true);
+      } else {
+        setPlaceResults([]);
+        setShowPlaceResults(true);
+      }
+    });
+  };
+
+  const selectPlace = (place) => {
+    setMapCenter({ lat: parseFloat(place.y), lng: parseFloat(place.x) });
+    setMapZoom(17);
+    setShowPlaceResults(false);
+    setPlaceKeyword('');
   };
 
   const moveToRegion = (e) => {
@@ -331,6 +356,56 @@ function MapSearch() {
                 onKeyPress={handleKeyPress}
               />
               <button className="map-search-btn" onClick={handleSearch}>검색</button>
+            </div>
+            {/* 장소 검색 */}
+            <div style={{ position: 'relative' }}>
+              <div className="map-search-box">
+                <input
+                  type="text"
+                  className="map-search-input"
+                  placeholder="장소 검색 (예: 경산 이마트)"
+                  value={placeKeyword}
+                  onChange={(e) => setPlaceKeyword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && searchPlace()}
+                />
+                <button className="map-search-btn" onClick={searchPlace}>검색</button>
+              </div>
+              {showPlaceResults && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                }}>
+                  {placeResults.length === 0 ? (
+                    <div style={{ padding: '1rem', color: '#666', textAlign: 'center' }}>검색 결과가 없습니다</div>
+                  ) : (
+                    placeResults.map((place, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => selectPlace(place)}
+                        style={{
+                          padding: '0.75rem',
+                          borderBottom: '1px solid #eee',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                        onMouseLeave={(e) => e.target.style.background = 'white'}
+                      >
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{place.place_name}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#666' }}>{place.address_name}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
