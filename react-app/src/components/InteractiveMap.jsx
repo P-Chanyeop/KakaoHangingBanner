@@ -12,7 +12,12 @@ const GYEONGBUK_REGIONS = [
 // SVG 지역명 매핑 (SVG의 지역명 → 실제 지역명)
 const REGION_NAME_MAP = {
   '포항시 남구': '포항시',
-  '포항시 북구': '포항시'
+  '포항시 북구': '포항시',
+  '창원시 마산합포구': '창원시',
+  '창원시 마산회원구': '창원시',
+  '창원시 성산구': '창원시',
+  '창원시 의창구': '창원시',
+  '창원시 진해구': '창원시'
 };
 
 // 경남 지역 (MapSearch.jsx와 동일)
@@ -158,8 +163,9 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         // 이벤트 리스너 저장 (클린업용)
         path._listeners = { handleMouseEnter, handleMouseLeave, handleClick };
 
-        // 라벨 추가 (허용된 지역만, 중복 방지)
-        if (!addedLabels.has(regionName)) {
+        // 라벨 추가 (매핑된 지역은 각 구마다, 일반 지역은 중복 방지)
+        const isMappedRegion = svgRegionName !== regionName;
+        if (isMappedRegion || !addedLabels.has(regionName)) {
           try {
             const bbox = path.getBBox();
             const centerX = bbox.x + bbox.width / 2;
@@ -179,7 +185,7 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
             label.textContent = regionName;
 
             svgElement.appendChild(label);
-            addedLabels.add(regionName);
+            if (!isMappedRegion) addedLabels.add(regionName);
           } catch (error) {
             console.error(`라벨 추가 실패 (${regionName}):`, error);
           }
@@ -263,6 +269,75 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
       }
     }
 
+    // 경상남도인 경우 부산/울산을 수동으로 추가
+    if (region === 'gyeongnam') {
+      try {
+        const buttonRadius = 25;
+        const buttonX = maxX + 60;
+        const centerY = (minY + maxY) / 2;
+
+        // 부산, 울산 버튼 데이터
+        const metroButtons = [
+          { id: '부산시', label: '부산', y: centerY - 40 },
+          { id: '울산시', label: '울산', y: centerY + 40 }
+        ];
+
+        metroButtons.forEach(({ id, label, y }) => {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('id', id);
+          circle.setAttribute('cx', buttonX);
+          circle.setAttribute('cy', y);
+          circle.setAttribute('r', buttonRadius);
+          circle.style.fill = '#f0f0f0';
+          circle.style.stroke = '#666';
+          circle.style.strokeWidth = '1';
+          circle.style.cursor = 'pointer';
+          circle.style.transition = 'all 0.2s';
+
+          const handleMouseEnter = () => {
+            circle.style.fill = '#fbbf24';
+            circle.style.stroke = '#f59e0b';
+            circle.style.strokeWidth = '2';
+          };
+          const handleMouseLeave = () => {
+            circle.style.fill = '#f0f0f0';
+            circle.style.stroke = '#666';
+            circle.style.strokeWidth = '1';
+          };
+          const handleClick = () => {
+            if (onRegionClick) onRegionClick(id);
+          };
+
+          circle.addEventListener('mouseenter', handleMouseEnter);
+          circle.addEventListener('mouseleave', handleMouseLeave);
+          circle.addEventListener('click', handleClick);
+          circle._listeners = { handleMouseEnter, handleMouseLeave, handleClick };
+
+          svgElement.appendChild(circle);
+
+          // 라벨
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', buttonX);
+          text.setAttribute('y', y);
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('dominant-baseline', 'middle');
+          text.setAttribute('class', 'region-label');
+          text.setAttribute('pointer-events', 'none');
+          text.style.fontSize = '11px';
+          text.style.fontWeight = 'bold';
+          text.style.fill = '#333';
+          text.style.userSelect = 'none';
+          text.textContent = label;
+
+          svgElement.appendChild(text);
+        });
+
+        maxX = Math.max(maxX, buttonX + buttonRadius);
+      } catch (error) {
+        console.error('부산/울산 추가 실패:', error);
+      }
+    }
+
     // 허용된 지역들만 보이도록 viewBox 조정
     if (svgElement && minX !== Infinity) {
       const padding = 20; // 여백
@@ -291,6 +366,16 @@ function InteractiveMap({ onRegionClick, region = 'gyeongbuk' }) {
         daeguCircle.removeEventListener('mouseleave', daeguCircle._listeners.handleDaeguMouseLeave);
         daeguCircle.removeEventListener('click', daeguCircle._listeners.handleDaeguClick);
       }
+
+      // 부산/울산 circle 클린업
+      ['부산시', '울산시'].forEach(id => {
+        const circle = svgContainerRef.current?.querySelector(`circle#${id}`);
+        if (circle && circle._listeners) {
+          circle.removeEventListener('mouseenter', circle._listeners.handleMouseEnter);
+          circle.removeEventListener('mouseleave', circle._listeners.handleMouseLeave);
+          circle.removeEventListener('click', circle._listeners.handleClick);
+        }
+      });
     };
   }, [svgContent, onRegionClick, region]);
 
