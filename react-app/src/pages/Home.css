@@ -170,6 +170,7 @@
     cursor: pointer;
     transition: all 0.3s;
     position: relative;
+    overflow: hidden;
 }
 
 .calendar-day:hover {
@@ -214,6 +215,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: left;
+    max-width: 100%;
+    display: block;
 }
 
 /* Event Form */
