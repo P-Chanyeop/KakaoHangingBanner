@@ -36,7 +36,7 @@ jobs:
         run: ssh -i ~/.ssh/deploy_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "cd /home/ubuntu/softcat && ./stop.sh"
 
       - name: Copy JAR to server
-        run: scp -i ~/.ssh/deploy_key build/libs/KakaoHangingBanner-0.0.1-SNAPSHOT.jar ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/home/ubuntu/softcat/mapboard-0.0.1-SNAPSHOT.jar
+        run: scp -i ~/.ssh/deploy_key build/libs/KakaoHangingBanner-0.0.1-SNAPSHOT.jar ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/home/ubuntu/softcat/KakaoHangingBanner-0.0.1-SNAPSHOT.jar
 
       - name: Start application
         run: ssh -i ~/.ssh/deploy_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "cd /home/ubuntu/softcat && ./start.sh"
