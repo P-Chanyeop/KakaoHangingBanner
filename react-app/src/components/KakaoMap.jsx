@@ -21,7 +21,6 @@ function KakaoMap({
   const minimapMarkerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
-  const clustererRef = useRef(null);
   const allMarkersDataRef = useRef([]);
   const isSelectingRoadviewRef = useRef(false); // ref로 상태 추적
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
@@ -202,14 +201,9 @@ function KakaoMap({
   // 실제 렌더링할 마커 결정
   const markersToRender = useViewportRendering ? visibleMarkers : markers;
 
-  // 마커 업데이트 (클러스터링 적용)
+  // 마커 업데이트
   useEffect(() => {
     if (!mapInstance.current || !window.kakao) return;
-
-    // 기존 클러스터러 제거
-    if (clustererRef.current) {
-      clustererRef.current.clear();
-    }
 
     // 기존 마커 제거
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -223,11 +217,12 @@ function KakaoMap({
     markersToRender.forEach(markerData => {
       const markerPosition = new window.kakao.maps.LatLng(markerData.lat, markerData.lng);
       const marker = new window.kakao.maps.Marker({
-        position: markerPosition
+        position: markerPosition,
+        map: mapInstance.current
       });
 
       // 상시 라벨 (CustomOverlay) - 줌 레벨 6 이하(확대)에서만 표시
-      if (showPermanentLabels && markerData.title && currentZoom <= 3) {
+      if (showPermanentLabels && markerData.title && currentZoom <= 6) {
         const labelContent = document.createElement('div');
         labelContent.innerHTML = markerData.title;
         labelContent.style.cssText = `
@@ -268,44 +263,6 @@ function KakaoMap({
 
       markersRef.current.push(marker);
     });
-
-    // 클러스터러 적용
-    if (window.kakao.maps.MarkerClusterer && markersRef.current.length > 0) {
-      clustererRef.current = new window.kakao.maps.MarkerClusterer({
-        map: mapInstance.current,
-        averageCenter: true,
-        minLevel: 4,
-        styles: [{
-          width: '53px', height: '52px',
-          background: 'rgba(37, 99, 235, 0.8)',
-          borderRadius: '50%',
-          color: '#fff',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          lineHeight: '52px',
-          fontSize: '14px'
-        }, {
-          width: '56px', height: '55px',
-          background: 'rgba(37, 99, 235, 0.85)',
-          borderRadius: '50%',
-          color: '#fff',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          lineHeight: '55px',
-          fontSize: '15px'
-        }, {
-          width: '66px', height: '65px',
-          background: 'rgba(220, 53, 69, 0.85)',
-          borderRadius: '50%',
-          color: '#fff',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          lineHeight: '65px',
-          fontSize: '16px'
-        }]
-      });
-      clustererRef.current.addMarkers(markersRef.current);
-    }
   }, [markersToRender, showPermanentLabels, currentZoom]);
 
   // 미니맵 초기화 (한 번만)

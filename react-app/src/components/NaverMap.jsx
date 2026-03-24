@@ -24,7 +24,6 @@ function NaverMap({
   const minimapMarkerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
-  const clustererRef = useRef(null);
   const allMarkersDataRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
@@ -266,15 +265,9 @@ function NaverMap({
   // 실제 렌더링할 마커 결정
   const markersToRender = useViewportRendering ? visibleMarkers : markers;
 
-  // 마커 업데이트 (클러스터링 적용)
+  // 마커 업데이트
   useEffect(() => {
     if (!mapInstance.current || !window.naver) return;
-
-    // 기존 클러스터러 제거
-    if (clustererRef.current) {
-      clustererRef.current.setMap(null);
-      clustererRef.current = null;
-    }
 
     // 기존 마커 제거
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -290,12 +283,13 @@ function NaverMap({
 
       const marker = new window.naver.maps.Marker({
         position: position,
+        map: mapInstance.current,
         title: markerData.title || `마커 ${index + 1}`,
         zIndex: 100
       });
 
       // 상시 라벨 (CustomOverlay) - 줌 레벨 12 이상(확대)에서만 표시
-      if (showPermanentLabels && markerData.title && currentZoom >= 15) {
+      if (showPermanentLabels && markerData.title && currentZoom >= 12) {
         const labelOverlay = new window.naver.maps.OverlayView();
         
         labelOverlay.onAdd = function() {
@@ -358,38 +352,6 @@ function NaverMap({
 
       markersRef.current.push(marker);
     });
-
-    // 네이버 MarkerClustering 적용
-    if (window.MarkerClustering && markersRef.current.length > 0) {
-      const clusterIconHtml = (size, count) =>
-        `<div style="width:${size}px;height:${size}px;line-height:${size}px;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;background:rgba(37,99,235,0.85);color:#fff;cursor:pointer;">${count}</div>`;
-
-      clustererRef.current = new window.MarkerClustering({
-        minClusterSize: 2,
-        maxZoom: 16,
-        map: mapInstance.current,
-        markers: markersRef.current,
-        disableClickZoom: false,
-        gridSize: 120,
-        icons: [
-          { content: '<div></div>', size: new window.naver.maps.Size(40, 40), anchor: new window.naver.maps.Point(20, 20) },
-          { content: '<div></div>', size: new window.naver.maps.Size(50, 50), anchor: new window.naver.maps.Point(25, 25) },
-          { content: '<div></div>', size: new window.naver.maps.Size(60, 60), anchor: new window.naver.maps.Point(30, 30) }
-        ],
-        indexGenerator: [10, 100, 200, 500, 1000],
-        stylingFunction: function(clusterMarker, count) {
-          const el = clusterMarker.getElement();
-          if (el) {
-            const size = count < 100 ? 40 : count < 500 ? 50 : 60;
-            const bg = count < 100 ? 'rgba(37,99,235,0.85)' : count < 500 ? 'rgba(37,99,235,0.9)' : 'rgba(220,53,69,0.85)';
-            el.innerHTML = `<div style="width:${size}px;height:${size}px;line-height:${size}px;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;background:${bg};color:#fff;cursor:pointer;">${count}</div>`;
-          }
-        }
-      });
-    } else {
-      // MarkerClustering 없으면 직접 지도에 표시
-      markersRef.current.forEach(marker => marker.setMap(mapInstance.current));
-    }
 
     // 마커가 있으면 범위에 맞게 조정 (autoFitBounds가 true이고 뷰포트 렌더링이 아닐 때만)
     if (autoFitBounds && markers.length > 0 && window.naver && !useViewportRendering) {
