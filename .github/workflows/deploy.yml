@@ -25,32 +25,18 @@ jobs:
         env:
           CI: false
 
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
       - name: Stop application
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ${{ secrets.LIGHTSAIL_USER }}
-          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          script: cd /home/ubuntu/softcat && ./stop.sh
+        run: ssh -i ~/.ssh/deploy_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "cd /home/ubuntu/softcat && ./stop.sh"
 
       - name: Copy JAR to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ${{ secrets.LIGHTSAIL_USER }}
-          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          source: "build/libs/mapboard-0.0.1-SNAPSHOT.jar"
-          target: "/home/ubuntu/softcat"
-          overwrite: true
+        run: scp -i ~/.ssh/deploy_key build/libs/mapboard-0.0.1-SNAPSHOT.jar ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/home/ubuntu/softcat/
 
       - name: Start application
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ${{ secrets.LIGHTSAIL_USER }}
-          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/softcat
-            mv build/libs/mapboard-0.0.1-SNAPSHOT.jar . 2>/dev/null || true
-            rm -rf build
-            ./start.sh
+        run: ssh -i ~/.ssh/deploy_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "cd /home/ubuntu/softcat && ./start.sh"
