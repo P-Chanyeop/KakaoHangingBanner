@@ -40,8 +40,8 @@ jobs:
           username: ${{ secrets.LIGHTSAIL_USER }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           source: "build/libs/mapboard-0.0.1-SNAPSHOT.jar"
-          target: "/home/ubuntu/softcat/"
-          strip_components: 2
+          target: "/home/ubuntu/softcat"
+          overwrite: true
 
       - name: Start application
         uses: appleboy/ssh-action@v1
@@ -49,4 +49,8 @@ jobs:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          script: cd /home/ubuntu/softcat && ./start.sh
+          script: |
+            cd /home/ubuntu/softcat
+            mv build/libs/mapboard-0.0.1-SNAPSHOT.jar . 2>/dev/null || true
+            rm -rf build
+            ./start.sh
