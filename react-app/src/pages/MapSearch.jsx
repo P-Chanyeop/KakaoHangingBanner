@@ -75,8 +75,8 @@ function MapSearch() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mapCenter, setMapCenter] = useState({ lat: 35.9, lng: 128.6 }); // 경상도 중심
-  const [mapZoom, setMapZoom] = useState(10); // 초기 확대 (렉 방지)
+  const [mapCenter, setMapCenter] = useState({ lat: 35.8714, lng: 128.6014 }); // 대구광역시 중심
+  const [mapZoom, setMapZoom] = useState(13); // 대구 확대 (로딩 속도 개선)
   const [selectedStand, setSelectedStand] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [placeKeyword, setPlaceKeyword] = useState('');
@@ -420,7 +420,31 @@ function MapSearch() {
                 >
                   <div onClick={() => focusStand(stand)} style={{ flex: 1, cursor: 'pointer' }}>
                     <div className="map-search-stand-name">{stand.name}</div>
-                    <div className="map-search-stand-address">{stand.address || '주소 정보 없음'}</div>
+                    <div className="map-search-stand-address">
+                      {stand.address || '주소 정보 없음'}
+                      {stand.address && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(stand.address);
+                            alert('주소가 복사되었습니다.');
+                          }}
+                          title="주소 복사"
+                          style={{
+                            marginLeft: '0.4rem',
+                            padding: '0.1rem 0.3rem',
+                            fontSize: '0.7rem',
+                            backgroundColor: '#6c757d',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <i className="fas fa-copy"></i>
+                        </button>
+                      )}
+                    </div>
                     <span className="map-search-stand-region">{stand.region || '지역 정보 없음'}</span>
                   </div>
                   {isAuthenticated && (

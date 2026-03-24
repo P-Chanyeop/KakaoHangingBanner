@@ -292,96 +292,6 @@ function Home() {
 
       {/* Main Content */}
       <main>
-        {/* 경북 지도 */}
-        <div className="container">
-          <div className="hero-image">
-            <InteractiveMap region="gyeongbuk" onRegionClick={handleRegionClick} />
-          </div>
-        </div>
-
-        {/* Orange Buttons Section */}
-        <section className="section">
-          <div className="container">
-            <h2 className="section-title">경북협회사이트</h2>
-            {orangeButtons.length > 0 ? (
-              <div className="button-grid">
-                {orangeButtons.map(button => (
-                  <a
-                    key={button.id}
-                    href={button.url}
-                    className="btn btn-orange"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <i className={`${button.iconClass} btn-icon`}></i>
-                    <span>{button.name}</span>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className="no-buttons">
-                <i className="fas fa-info-circle" style={{ fontSize: '2rem', marginBottom: '1rem', display: 'block' }}></i>
-                <p>등록된 버튼이 없습니다. <Link to="/admin/buttons" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>관리자 페이지</Link>에서 버튼을 추가하세요.</p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* 경남 지도 */}
-        <div className="container">
-          <div className="hero-image">
-            <InteractiveMap region="gyeongnam" onRegionClick={handleRegionClick} />
-          </div>
-        </div>
-
-        {/* Green Buttons Section */}
-        <section className="section">
-          <div className="container">
-            <h2 className="section-title">경남협회사이트</h2>
-            {greenButtons.length > 0 ? (
-              <div className="button-grid">
-                {greenButtons.map(button => (
-                  <a
-                    key={button.id}
-                    href={button.url}
-                    className="btn btn-green"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <i className={`${button.iconClass} btn-icon`}></i>
-                    <span>{button.name}</span>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className="no-buttons">
-                <i className="fas fa-info-circle" style={{ fontSize: '2rem', marginBottom: '1rem', display: 'block' }}></i>
-                <p>등록된 버튼이 없습니다. <Link to="/admin/buttons" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>관리자 페이지</Link>에서 버튼을 추가하세요.</p>
-              </div>
-            )}
-            
-            {/* 추가 버튼들 */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-              <button
-                className="btn btn-orange"
-                onClick={() => setShowWebhardModal(true)}
-                style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
-              >
-                <i className="fas fa-hdd btn-icon"></i>
-                <span>웹하드 아이디/비밀번호</span>
-              </button>
-              <button
-                className="btn btn-orange"
-                onClick={() => setShowNoticeModal(true)}
-                style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
-              >
-                <i className="fas fa-bullhorn btn-icon"></i>
-                <span>공지사항</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
         {/* Calendar Section */}
         <section className="calendar-section">
           <div className="container">
@@ -472,6 +382,96 @@ function Home() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </section>
+
+        {/* 경북 지도 */}
+        <div className="container">
+          <div className="hero-image">
+            <InteractiveMap region="gyeongbuk" onRegionClick={handleRegionClick} />
+          </div>
+        </div>
+
+        {/* Orange Buttons Section */}
+        <section className="section">
+          <div className="container">
+            <h2 className="section-title">경북협회사이트</h2>
+            {orangeButtons.length > 0 ? (
+              <div className="button-grid">
+                {orangeButtons.map(button => (
+                  <a
+                    key={button.id}
+                    href={button.url}
+                    className="btn btn-orange"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i className={`${button.iconClass} btn-icon`}></i>
+                    <span>{button.name}</span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="no-buttons">
+                <i className="fas fa-info-circle" style={{ fontSize: '2rem', marginBottom: '1rem', display: 'block' }}></i>
+                <p>등록된 버튼이 없습니다. <Link to="/admin/buttons" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>관리자 페이지</Link>에서 버튼을 추가하세요.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 경남 지도 */}
+        <div className="container">
+          <div className="hero-image">
+            <InteractiveMap region="gyeongnam" onRegionClick={handleRegionClick} />
+          </div>
+        </div>
+
+        {/* Green Buttons Section */}
+        <section className="section">
+          <div className="container">
+            <h2 className="section-title">경남협회사이트</h2>
+            {greenButtons.length > 0 ? (
+              <div className="button-grid">
+                {greenButtons.map(button => (
+                  <a
+                    key={button.id}
+                    href={button.url}
+                    className="btn btn-green"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i className={`${button.iconClass} btn-icon`}></i>
+                    <span>{button.name}</span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="no-buttons">
+                <i className="fas fa-info-circle" style={{ fontSize: '2rem', marginBottom: '1rem', display: 'block' }}></i>
+                <p>등록된 버튼이 없습니다. <Link to="/admin/buttons" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>관리자 페이지</Link>에서 버튼을 추가하세요.</p>
+              </div>
+            )}
+            
+            {/* 추가 버튼들 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
+              <button
+                className="btn btn-orange"
+                onClick={() => setShowWebhardModal(true)}
+                style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
+              >
+                <i className="fas fa-hdd btn-icon"></i>
+                <span>웹하드 아이디/비밀번호</span>
+              </button>
+              <button
+                className="btn btn-orange"
+                onClick={() => setShowNoticeModal(true)}
+                style={{ width: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
+              >
+                <i className="fas fa-bullhorn btn-icon"></i>
+                <span>공지사항</span>
+              </button>
             </div>
           </div>
         </section>
