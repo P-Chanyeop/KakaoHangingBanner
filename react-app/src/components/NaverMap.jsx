@@ -295,7 +295,7 @@ function NaverMap({
       });
 
       // 상시 라벨 (CustomOverlay) - 줌 레벨 12 이상(확대)에서만 표시
-      if (showPermanentLabels && markerData.title && currentZoom >= 12) {
+      if (showPermanentLabels && markerData.title && currentZoom >= 15) {
         const labelOverlay = new window.naver.maps.OverlayView();
         
         labelOverlay.onAdd = function() {

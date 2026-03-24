@@ -227,7 +227,7 @@ function KakaoMap({
       });
 
       // 상시 라벨 (CustomOverlay) - 줌 레벨 6 이하(확대)에서만 표시
-      if (showPermanentLabels && markerData.title && currentZoom <= 6) {
+      if (showPermanentLabels && markerData.title && currentZoom <= 3) {
         const labelContent = document.createElement('div');
         labelContent.innerHTML = markerData.title;
         labelContent.style.cssText = `
