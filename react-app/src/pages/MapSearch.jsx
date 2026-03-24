@@ -427,21 +427,7 @@ function MapSearch() {
                           onClick={(e) => {
                             e.stopPropagation();
                             const text = stand.address;
-                            if (navigator.clipboard && navigator.clipboard.writeText) {
-                              navigator.clipboard.writeText(text).then(() => {
-                                alert('주소가 복사되었습니다.');
-                              }).catch(() => {
-                                const ta = document.createElement('textarea');
-                                ta.value = text;
-                                ta.style.position = 'fixed';
-                                ta.style.opacity = '0';
-                                document.body.appendChild(ta);
-                                ta.select();
-                                document.execCommand('copy');
-                                document.body.removeChild(ta);
-                                alert('주소가 복사되었습니다.');
-                              });
-                            } else {
+                            const fallbackCopy = () => {
                               const ta = document.createElement('textarea');
                               ta.value = text;
                               ta.style.position = 'fixed';
@@ -450,8 +436,21 @@ function MapSearch() {
                               ta.select();
                               document.execCommand('copy');
                               document.body.removeChild(ta);
-                              alert('주소가 복사되었습니다.');
+                            };
+                            try {
+                              if (navigator.clipboard) {
+                                navigator.clipboard.writeText(text).catch(fallbackCopy);
+                              } else {
+                                fallbackCopy();
+                              }
+                            } catch (err) {
+                              fallbackCopy();
                             }
+                            const toast = document.createElement('div');
+                            toast.textContent = '주소가 복사되었습니다';
+                            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;z-index:99999;';
+                            document.body.appendChild(toast);
+                            setTimeout(() => toast.remove(), 1500);
                           }}
                           title="주소 복사"
                           style={{
