@@ -426,8 +426,32 @@ function MapSearch() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigator.clipboard.writeText(stand.address);
-                            alert('주소가 복사되었습니다.');
+                            const text = stand.address;
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                              navigator.clipboard.writeText(text).then(() => {
+                                alert('주소가 복사되었습니다.');
+                              }).catch(() => {
+                                const ta = document.createElement('textarea');
+                                ta.value = text;
+                                ta.style.position = 'fixed';
+                                ta.style.opacity = '0';
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
+                                alert('주소가 복사되었습니다.');
+                              });
+                            } else {
+                              const ta = document.createElement('textarea');
+                              ta.value = text;
+                              ta.style.position = 'fixed';
+                              ta.style.opacity = '0';
+                              document.body.appendChild(ta);
+                              ta.select();
+                              document.execCommand('copy');
+                              document.body.removeChild(ta);
+                              alert('주소가 복사되었습니다.');
+                            }
                           }}
                           title="주소 복사"
                           style={{
