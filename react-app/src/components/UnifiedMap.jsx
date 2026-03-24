@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import MapTabs from './MapTabs';
 import KakaoMap from './KakaoMap';
 import NaverMap from './NaverMap';
-import 'leaflet/dist/leaflet.css';
 
 // Leaflet 아이콘 설정
 delete L.Icon.Default.prototype._getIconUrl;
@@ -32,6 +35,7 @@ function UnifiedMap({
   const leafletMapRef = useRef(null);
   const leafletInstanceRef = useRef(null);
   const leafletMarkersRef = useRef([]);
+  const leafletClusterRef = useRef(null);
 
   const [leafletBoundsChanged, setLeafletBoundsChanged] = useState(0);
 
@@ -100,9 +104,15 @@ function UnifiedMap({
     return markers.filter(m => bounds.contains([m.lat, m.lng]));
   };
 
-  // Leaflet 마커 업데이트
+  // Leaflet 마커 업데이트 (클러스터링 적용)
   useEffect(() => {
     if (mapProvider === 'leaflet' && leafletInstanceRef.current) {
+      // 기존 클러스터 그룹 제거
+      if (leafletClusterRef.current) {
+        leafletInstanceRef.current.removeLayer(leafletClusterRef.current);
+        leafletClusterRef.current = null;
+      }
+
       // 기존 마커 제거
       leafletMarkersRef.current.forEach(marker => leafletInstanceRef.current.removeLayer(marker));
       leafletMarkersRef.current = [];
@@ -110,22 +120,32 @@ function UnifiedMap({
       // 뷰포트 렌더링 적용
       const visibleMarkers = getVisibleLeafletMarkers();
 
+      // 클러스터 그룹 생성
+      const clusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 60,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true
+      });
+
       // 새 마커 추가
       visibleMarkers.forEach(markerData => {
-        const marker = L.marker([markerData.lat, markerData.lng])
-          .addTo(leafletInstanceRef.current);
+        const marker = L.marker([markerData.lat, markerData.lng]);
 
         if (markerData.content) {
           marker.bindPopup(markerData.content);
         }
 
+        clusterGroup.addLayer(marker);
         leafletMarkersRef.current.push(marker);
       });
 
+      leafletInstanceRef.current.addLayer(clusterGroup);
+      leafletClusterRef.current = clusterGroup;
+
       // 마커가 있으면 범위에 맞게 조정 (autoFitBounds가 true일 때만)
       if (autoFitBounds && leafletMarkersRef.current.length > 0) {
-        const group = L.featureGroup(leafletMarkersRef.current);
-        leafletInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+        leafletInstanceRef.current.fitBounds(clusterGroup.getBounds().pad(0.1));
       }
     }
   }, [markers, mapProvider, autoFitBounds, leafletBoundsChanged, useViewportRendering]);
