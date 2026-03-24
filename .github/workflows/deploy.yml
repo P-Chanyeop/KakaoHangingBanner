@@ -22,6 +22,8 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew clean build -x test
+        env:
+          CI: false
 
       - name: Stop application
         uses: appleboy/ssh-action@v1
