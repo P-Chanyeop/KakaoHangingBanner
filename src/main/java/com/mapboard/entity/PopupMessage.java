@@ -16,4 +16,7 @@ public class PopupMessage {
 
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    @Column
+    private String imageUrl;
 }

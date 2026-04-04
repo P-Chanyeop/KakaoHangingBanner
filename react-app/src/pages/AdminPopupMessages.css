@@ -216,3 +216,49 @@
   font-size: 1.1rem;
   margin: 0;
 }
+
+/* 이미지 업로드 */
+.image-upload-section {
+  margin-bottom: 1rem;
+}
+
+.image-upload-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.image-upload-section input[type="file"] {
+  font-size: 0.9rem;
+}
+
+.image-preview {
+  margin-bottom: 0.75rem;
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  display: block;
+}
+
+.image-delete-btn {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.image-delete-btn:hover {
+  background: #c82333;
+}

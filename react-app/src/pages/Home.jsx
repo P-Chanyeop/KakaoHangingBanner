@@ -23,6 +23,9 @@ function Home() {
   const [showRegionModal, setShowRegionModal] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [regionMessage, setRegionMessage] = useState('');
+  const [webhardImageUrl, setWebhardImageUrl] = useState('');
+  const [noticeImageUrl, setNoticeImageUrl] = useState('');
+  const [regionImageUrl, setRegionImageUrl] = useState('');
 
   useEffect(() => {
     loadButtons();
@@ -62,10 +65,14 @@ function Home() {
       const notice = await popupMessagesAPI.getByName('notice');
       setWebhardMessage(webhard.content || '웹하드 정보가 등록되지 않았습니다.');
       setNoticeMessage(notice.content || '공지사항이 등록되지 않았습니다.');
+      setWebhardImageUrl(webhard.imageUrl || '');
+      setNoticeImageUrl(notice.imageUrl || '');
     } catch (error) {
       console.error('팝업 메시지 로드 실패:', error);
       setWebhardMessage('웹하드 정보가 등록되지 않았습니다.');
       setNoticeMessage('공지사항이 등록되지 않았습니다.');
+      setWebhardImageUrl('');
+      setNoticeImageUrl('');
     }
   };
 
@@ -78,8 +85,10 @@ function Home() {
     try {
       const message = await popupMessagesAPI.getByName(`region_${regionName}`);
       setRegionMessage(message.content || `${regionName}에 대한 정보가 등록되지 않았습니다.`);
+      setRegionImageUrl(message.imageUrl || '');
     } catch (error) {
       setRegionMessage(`${regionName}에 대한 정보가 등록되지 않았습니다.`);
+      setRegionImageUrl('');
     }
     setShowRegionModal(true);
   };
@@ -524,6 +533,7 @@ function Home() {
             <h2><i className="fas fa-hdd"></i> 웹하드 아이디/비밀번호</h2>
             <div className="popup-modal-body">
               <pre>{webhardMessage}</pre>
+              {webhardImageUrl && <img src={webhardImageUrl} alt="웹하드" style={{ maxWidth: '100%', marginTop: '1rem', borderRadius: '4px' }} />}
             </div>
           </div>
         </div>
@@ -539,6 +549,7 @@ function Home() {
             <h2><i className="fas fa-bullhorn"></i> 공지사항</h2>
             <div className="popup-modal-body">
               <pre>{noticeMessage}</pre>
+              {noticeImageUrl && <img src={noticeImageUrl} alt="공지사항" style={{ maxWidth: '100%', marginTop: '1rem', borderRadius: '4px' }} />}
             </div>
           </div>
         </div>
@@ -554,6 +565,7 @@ function Home() {
             <h2><i className="fas fa-map-marker-alt"></i> {selectedRegion}</h2>
             <div className="popup-modal-body">
               <pre>{regionMessage}</pre>
+              {regionImageUrl && <img src={regionImageUrl} alt={selectedRegion} style={{ maxWidth: '100%', marginTop: '1rem', borderRadius: '4px' }} />}
             </div>
           </div>
         </div>

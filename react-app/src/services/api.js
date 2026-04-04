@@ -338,5 +338,28 @@ export const popupMessagesAPI = {
     });
     if (!response.ok) throw new Error('팝업 메시지 저장에 실패했습니다.');
     return response.json();
+  },
+
+  saveWithImage: async (name, content, imageFile) => {
+    const formData = new FormData();
+    formData.append('content', content || '');
+    if (imageFile) formData.append('image', imageFile);
+    const token = localStorage.getItem('token');
+    const response = await fetchWithAuth(`${API_BASE_URL}/popup-messages/${name}/with-image`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    if (!response.ok) throw new Error('팝업 메시지 저장에 실패했습니다.');
+    return response.json();
+  },
+
+  deleteImage: async (name) => {
+    const response = await fetchWithAuth(`${API_BASE_URL}/popup-messages/${name}/image`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('이미지 삭제에 실패했습니다.');
+    return response.json();
   }
 };
