@@ -246,7 +246,7 @@ function AdminButtons() {
                 </td>
                 <td>{button.name}</td>
                 <td>
-                  <a href={button.url} target="_blank" rel="noopener noreferrer">
+                  <a href={button.url} target="_blank" rel="noopener noreferrer" className="url-cell" title={button.url}>
                     {button.url}
                   </a>
                 </td>

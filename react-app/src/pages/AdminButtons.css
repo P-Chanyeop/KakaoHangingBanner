@@ -41,6 +41,14 @@
     border-bottom: 1px solid var(--border-color);
 }
 
+.url-cell {
+    display: block;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .admin-table tbody tr:hover {
     background-color: var(--bg-gray-light);
 }
