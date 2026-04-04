@@ -543,6 +543,7 @@
         max-width: none;
         padding: 1.5rem;
         max-height: 90vh;
+        overflow-y: auto;
     }
 
     .popup-modal-close {
@@ -576,9 +577,9 @@
     background: white;
     border-radius: 12px;
     padding: 2rem;
-    max-width: 600px;
+    max-width: 700px;
     width: 90%;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow-y: auto;
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
