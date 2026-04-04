@@ -244,7 +244,7 @@ function AdminButtons() {
                 <td>
                   <i className={`${button.iconClass} icon-preview`}></i>
                 </td>
-                <td>{button.name}</td>
+                <td title={button.name}>{button.name}</td>
                 <td>
                   <a href={button.url} target="_blank" rel="noopener noreferrer" className="url-cell" title={button.url}>
                     {button.url}
