@@ -418,11 +418,11 @@ function NaverMap({
           zIndex: 999
         });
 
-        const dragListener = window.naver.maps.Event.addListenerOnce(
-          mapInstance.current, 'dragstart', clearCurrentLocationMarker
+        const dragListener = window.naver.maps.Event.addListener(
+          mapInstance.current, 'dragstart', () => clearCurrentLocationMarker()
         );
-        const clickListener = window.naver.maps.Event.addListenerOnce(
-          mapInstance.current, 'click', clearCurrentLocationMarker
+        const clickListener = window.naver.maps.Event.addListener(
+          mapInstance.current, 'click', () => clearCurrentLocationMarker()
         );
         currentLocationListenersRef.current = [dragListener, clickListener];
       }
