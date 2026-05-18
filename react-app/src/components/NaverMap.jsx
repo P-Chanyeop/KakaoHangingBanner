@@ -27,6 +27,8 @@ function NaverMap({
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
   const allMarkersDataRef = useRef([]);
+  const currentLocationMarkerRef = useRef(null);
+  const currentLocationListenersRef = useRef([]);
   const [apiError, setApiError] = useState(null);
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
@@ -376,6 +378,20 @@ function NaverMap({
     }
   }, []); // 빈 의존성 배열로 초기 마운트 시에만 실행
 
+  // 현재 위치 마커 제거
+  const clearCurrentLocationMarker = () => {
+    if (currentLocationMarkerRef.current) {
+      currentLocationMarkerRef.current.setMap(null);
+      currentLocationMarkerRef.current = null;
+    }
+    if (window.naver) {
+      currentLocationListenersRef.current.forEach(listener => {
+        window.naver.maps.Event.removeListener(listener);
+      });
+    }
+    currentLocationListenersRef.current = [];
+  };
+
   // 현재 위치로 이동
   const handleLocate = async () => {
     if (isLocating) return;
@@ -389,6 +405,26 @@ function NaverMap({
       if (mapInstance.current && window.naver) {
         const target = new window.naver.maps.LatLng(coords.lat, coords.lng);
         mapInstance.current.morph(target, 16, { duration: 500, easing: 'easeOutCubic' });
+
+        clearCurrentLocationMarker();
+
+        currentLocationMarkerRef.current = new window.naver.maps.Marker({
+          position: target,
+          map: mapInstance.current,
+          icon: {
+            content: '<div style="width:18px;height:18px;background:#4285F4;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(66,133,244,0.3),0 2px 4px rgba(0,0,0,0.3);pointer-events:none;"></div>',
+            anchor: new window.naver.maps.Point(12, 12)
+          },
+          zIndex: 999
+        });
+
+        const dragListener = window.naver.maps.Event.addListenerOnce(
+          mapInstance.current, 'dragstart', clearCurrentLocationMarker
+        );
+        const clickListener = window.naver.maps.Event.addListenerOnce(
+          mapInstance.current, 'click', clearCurrentLocationMarker
+        );
+        currentLocationListenersRef.current = [dragListener, clickListener];
       }
     } catch (err) {
       setLocationAlert(err);

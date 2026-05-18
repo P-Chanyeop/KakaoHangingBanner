@@ -24,6 +24,8 @@ function KakaoMap({
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
   const allMarkersDataRef = useRef([]);
+  const currentLocationOverlayRef = useRef(null);
+  const currentLocationListenersRef = useRef({});
   const isSelectingRoadviewRef = useRef(false); // ref로 상태 추적
   const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [isSelectingRoadview, setIsSelectingRoadview] = useState(false);
@@ -368,6 +370,20 @@ function KakaoMap({
     });
   };
 
+  // 현재 위치 마커 제거
+  const clearCurrentLocationMarker = () => {
+    if (currentLocationOverlayRef.current) {
+      currentLocationOverlayRef.current.setMap(null);
+      currentLocationOverlayRef.current = null;
+    }
+    if (window.kakao && mapInstance.current) {
+      const { drag, click } = currentLocationListenersRef.current;
+      if (drag) window.kakao.maps.event.removeListener(mapInstance.current, 'dragstart', drag);
+      if (click) window.kakao.maps.event.removeListener(mapInstance.current, 'click', click);
+    }
+    currentLocationListenersRef.current = {};
+  };
+
   // 현재 위치로 이동
   const handleLocate = async () => {
     if (isLocating) return;
@@ -382,6 +398,26 @@ function KakaoMap({
         const target = new window.kakao.maps.LatLng(coords.lat, coords.lng);
         mapInstance.current.setLevel(3);
         mapInstance.current.panTo(target);
+
+        clearCurrentLocationMarker();
+
+        const content = document.createElement('div');
+        content.style.cssText = 'width:18px;height:18px;background:#4285F4;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(66,133,244,0.3),0 2px 4px rgba(0,0,0,0.3);pointer-events:none;';
+
+        currentLocationOverlayRef.current = new window.kakao.maps.CustomOverlay({
+          position: target,
+          content: content,
+          xAnchor: 0.5,
+          yAnchor: 0.5,
+          zIndex: 999
+        });
+        currentLocationOverlayRef.current.setMap(mapInstance.current);
+
+        const onDrag = () => clearCurrentLocationMarker();
+        const onClick = () => clearCurrentLocationMarker();
+        window.kakao.maps.event.addListener(mapInstance.current, 'dragstart', onDrag);
+        window.kakao.maps.event.addListener(mapInstance.current, 'click', onClick);
+        currentLocationListenersRef.current = { drag: onDrag, click: onClick };
       }
     } catch (err) {
       setLocationAlert(err);

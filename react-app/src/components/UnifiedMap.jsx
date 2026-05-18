@@ -34,10 +34,19 @@ function UnifiedMap({
   const leafletMapRef = useRef(null);
   const leafletInstanceRef = useRef(null);
   const leafletMarkersRef = useRef([]);
+  const leafletCurrentLocationMarkerRef = useRef(null);
 
   const [leafletBoundsChanged, setLeafletBoundsChanged] = useState(0);
   const [leafletLocationAlert, setLeafletLocationAlert] = useState(null);
   const [isLeafletLocating, setIsLeafletLocating] = useState(false);
+
+  // Leaflet: 현재 위치 마커 제거
+  const clearLeafletCurrentLocationMarker = () => {
+    if (leafletCurrentLocationMarkerRef.current && leafletInstanceRef.current) {
+      leafletInstanceRef.current.removeLayer(leafletCurrentLocationMarkerRef.current);
+      leafletCurrentLocationMarkerRef.current = null;
+    }
+  };
 
   // Leaflet: 현재 위치로 이동
   const handleLeafletLocate = async () => {
@@ -54,6 +63,20 @@ function UnifiedMap({
           animate: true,
           duration: 0.5
         });
+
+        clearLeafletCurrentLocationMarker();
+
+        leafletCurrentLocationMarkerRef.current = L.circleMarker([coords.lat, coords.lng], {
+          radius: 8,
+          fillColor: '#4285F4',
+          color: '#ffffff',
+          weight: 3,
+          fillOpacity: 1,
+          interactive: false
+        }).addTo(leafletInstanceRef.current);
+
+        leafletInstanceRef.current.once('dragstart', clearLeafletCurrentLocationMarker);
+        leafletInstanceRef.current.once('click', clearLeafletCurrentLocationMarker);
       }
     } catch (err) {
       setLeafletLocationAlert(err);
