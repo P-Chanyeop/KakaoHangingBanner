@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { getCurrentLocation, isInKorea } from '../utils/geolocation';
+import LocationAlertModal from './LocationAlertModal';
 
 function NaverMap({
   center = { lat: 36.5, lng: 127.5 },
@@ -31,6 +33,8 @@ function NaverMap({
   const roadviewAvailableRef = useRef(true);
   const [visibleMarkers, setVisibleMarkers] = useState([]);
   const [currentZoom, setCurrentZoom] = useState(zoom);
+  const [locationAlert, setLocationAlert] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   // 네이버맵 초기화
   useEffect(() => {
@@ -372,6 +376,27 @@ function NaverMap({
     }
   }, []); // 빈 의존성 배열로 초기 마운트 시에만 실행
 
+  // 현재 위치로 이동
+  const handleLocate = async () => {
+    if (isLocating) return;
+    setIsLocating(true);
+    try {
+      const coords = await getCurrentLocation();
+      if (!isInKorea(coords)) {
+        setLocationAlert({ type: 'outside-korea' });
+        return;
+      }
+      if (mapInstance.current && window.naver) {
+        const target = new window.naver.maps.LatLng(coords.lat, coords.lng);
+        mapInstance.current.morph(target, 16, { duration: 500, easing: 'easeOutCubic' });
+      }
+    } catch (err) {
+      setLocationAlert(err);
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
   // 로드뷰 토글
   const toggleRoadview = () => {
     if (!panoInstance.current) {
@@ -564,6 +589,51 @@ function NaverMap({
           }
         </button>
       )}
+
+      {/* 현재 위치 버튼 */}
+      {!isRoadviewOpen && (
+        <button
+          type="button"
+          onClick={handleLocate}
+          disabled={isLocating}
+          title="현재 위치로 이동"
+          aria-label="현재 위치로 이동"
+          style={{
+            position: 'absolute',
+            top: '60px',
+            right: '10px',
+            zIndex: 10001,
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'white',
+            color: '#374151',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: isLocating ? 'wait' : 'pointer',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            transition: 'all 0.2s ease',
+            opacity: isLocating ? 0.7 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (!isLocating) {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          }}
+        >
+          <i className={`fas ${isLocating ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'}`}></i>
+        </button>
+      )}
+
+      <LocationAlertModal alert={locationAlert} onClose={() => setLocationAlert(null)} />
 
       {/* 로드뷰 선택 모드 안내 */}
       {roadviewMode === 'selector' && isSelectingRoadview && !isRoadviewOpen && (

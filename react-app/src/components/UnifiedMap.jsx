@@ -3,6 +3,8 @@ import L from 'leaflet';
 import MapTabs from './MapTabs';
 import KakaoMap from './KakaoMap';
 import NaverMap from './NaverMap';
+import LocationAlertModal from './LocationAlertModal';
+import { getCurrentLocation, isInKorea } from '../utils/geolocation';
 import 'leaflet/dist/leaflet.css';
 
 // Leaflet 아이콘 설정
@@ -34,6 +36,31 @@ function UnifiedMap({
   const leafletMarkersRef = useRef([]);
 
   const [leafletBoundsChanged, setLeafletBoundsChanged] = useState(0);
+  const [leafletLocationAlert, setLeafletLocationAlert] = useState(null);
+  const [isLeafletLocating, setIsLeafletLocating] = useState(false);
+
+  // Leaflet: 현재 위치로 이동
+  const handleLeafletLocate = async () => {
+    if (isLeafletLocating) return;
+    setIsLeafletLocating(true);
+    try {
+      const coords = await getCurrentLocation();
+      if (!isInKorea(coords)) {
+        setLeafletLocationAlert({ type: 'outside-korea' });
+        return;
+      }
+      if (leafletInstanceRef.current) {
+        leafletInstanceRef.current.setView([coords.lat, coords.lng], 16, {
+          animate: true,
+          duration: 0.5
+        });
+      }
+    } catch (err) {
+      setLeafletLocationAlert(err);
+    } finally {
+      setIsLeafletLocating(false);
+    }
+  };
 
   // Leaflet 지도 초기화
   useEffect(() => {
@@ -159,8 +186,51 @@ function UnifiedMap({
         </div>
       )}
 
-      <div style={{ width: '100%', height: '100%', display: mapProvider === 'leaflet' ? 'block' : 'none' }}>
+      <div style={{ position: 'relative', width: '100%', height: '100%', display: mapProvider === 'leaflet' ? 'block' : 'none' }}>
         <div ref={leafletMapRef} style={{ width: '100%', height: '100%' }}></div>
+
+        {/* 현재 위치 버튼 (Leaflet) */}
+        <button
+          type="button"
+          onClick={handleLeafletLocate}
+          disabled={isLeafletLocating}
+          title="현재 위치로 이동"
+          aria-label="현재 위치로 이동"
+          style={{
+            position: 'absolute',
+            top: '60px',
+            right: '10px',
+            zIndex: 1000,
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'white',
+            color: '#374151',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: isLeafletLocating ? 'wait' : 'pointer',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            transition: 'all 0.2s ease',
+            opacity: isLeafletLocating ? 0.7 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (!isLeafletLocating) {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          }}
+        >
+          <i className={`fas ${isLeafletLocating ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'}`}></i>
+        </button>
+
+        <LocationAlertModal alert={leafletLocationAlert} onClose={() => setLeafletLocationAlert(null)} />
       </div>
 
       {mapProvider === 'kakao' && (
